@@ -453,7 +453,7 @@ Tức là khi ta ghi đè EIP với địa chỉ của hàm win thì ta cần ph
 
 Khi ta nhập 1 lượng buffer đủ nhiều để đến EIP và sau khi return nó sẽ nhảy sang hàm win. Đặc biệt ta cần phải tạo lại một cái stack cho hàm win tương tự như vậy:
 
-![alt_text](image(190).png)
+![alt_text](image.png)
 
 ### Exploit
 
