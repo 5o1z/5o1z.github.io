@@ -22,11 +22,7 @@ Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RU
 ```
 
 Một ELF 64-bit và không Stack Canary
-
-<details>
-
-<summary>Source code</summary>
-
+Và đây là source code của nó: 
 ```c
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,8 +80,6 @@ int main(void)
 }
 
 ```
-
-</details>
 
 Ta có thể thấy trong source code nó sử dụng một vuln function là gets(), điều này cho ta được phép thực hiện buffer overflow do Stack Canary đã tắt. Và khi **`code == 0xdeadbeef`** thì ta sẽ giải quyết được vấn đề
 
