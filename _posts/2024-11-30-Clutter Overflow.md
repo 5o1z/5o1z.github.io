@@ -11,7 +11,7 @@ image:
 
 ## Analysis
 
-Hãy kiểm tra thông tin của Binary này:
+Check out this Binary's information:
 
 ```bash
 ➜  clutter-overflow file chall
@@ -21,8 +21,8 @@ RELRO           STACK CANARY      NX            PIE             RPATH      RUNPA
 Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   69 Symbols        No    0               2               chall
 ```
 
-Một ELF 64-bit và không Stack Canary
-Và đây là source code của nó: 
+A 64-bit ELF and no Stack Canary
+And here is its source code:
 ```c
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,9 +81,9 @@ int main(void)
 
 ```
 
-Ta có thể thấy trong source code nó sử dụng một vuln function là gets(), điều này cho ta được phép thực hiện buffer overflow do Stack Canary đã tắt. Và khi **`code == 0xdeadbeef`** thì ta sẽ giải quyết được vấn đề
+We can see in the source code it uses a vuln function called gets(), this allows us to perform buffer overflow since Stack Canary is disabled. And when **`code == 0xdeadbeef`** we will solve the problem
 
-Hãy dùng GDB để tìm offset giữa input và code:
+Let's use GDB to find the offset between the input and the code:
 
 ```bash
 Breakpoint 1, 0x000000000040074c in main ()
@@ -234,8 +234,7 @@ $cs: 0x33 $ss: 0x2b $ds: 0x00 $es: 0x00 $fs: 0x00 $gs: 0x00
 [#0] 0x400756 → main()
 ```
 
-Như ta có thể thế, thì input của ta nằm tại **0x00007fffffffda10** và ở main+008f ta thấy nó so sánh với một biến nào đó, có thể biến đó là code vì nó so sánh với **0xdeadbeef.** Ta sẽ tính địa chỉ từ input đến đây, nhưng trước tiên ta cần tính offset của nó bằng cách:
-
+As we can see, our input is at **0x00007fffffffda10** and at main+008f we see it compares to some variable, maybe that variable is code because it compares to **0xdeadbeef.** We will calculate the address from input to here, but first we need to calculate its offset by:
 ```bash
 gef➤  x/xg $rbp-0x8
 0x7fffffffdb18: 0x0000000000000000
@@ -247,7 +246,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 264
 ```
 
-Vậy offset của ta có được là 264, và nhiêu đó cũng đã đủ để ta viết exploit
+So our offset is 264, and that's enough for us to write an exploit.
 
 ## Exploit
 
@@ -336,9 +335,9 @@ $
 
 ### Extra
 
-Vì đây là buffer overflow và nó không có bất kì một biện pháp bảo vệ nào cả nên ta có thể nghĩ đến việc kiểm soát RIP của nó và cho nó return về hàm đọc flag
+Since this is a buffer overflow and it doesn't have any protection, we can think about controlling its RIP and letting it return to the flag reading function
 
-Tìm offset đến RIP như bình thường:
+Find the offset to RIP as usual:
 
 ```bash
 gef➤  i f
@@ -356,7 +355,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 280
 ```
 
-Và ta sẽ xác định xem ta muốn cho nó return về ở đâu:
+And we will determine where we want it to return:
 
 ```bash
 gef➤  disas*main
@@ -414,7 +413,7 @@ Dump of assembler code for function main:
    0x00000000004007c0 <+249>:   ret
 ```
 
-Ở đây mình sẽ cho nó return về **main+183**
+Here I will let it return **main+183**
 
 ```python
 #!/usr/bin/python3
