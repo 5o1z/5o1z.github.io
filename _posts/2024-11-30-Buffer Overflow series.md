@@ -452,7 +452,7 @@ That is, when we overwrite EIP with the address of the win function, we need to 
 
 When we enter a large enough buffer to reach EIP and after returning, it will jump to the win function. In particular, we need to recreate a stack for the win function similar to this:
 
-![alt_text](/assets/img/picoCTF/image.png)
+![alt_text](/assets/img/picoCTF/bof.png)
 
 ### Exploit
 
