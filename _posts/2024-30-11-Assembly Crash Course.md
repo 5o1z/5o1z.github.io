@@ -99,9 +99,9 @@ code = asm('''
 >
 > In most programming languages, we refer to mod with the symbol `%`.
 
-Phần dư của phép chia sẽ được lưu vào **rdx** nếu là **64bit** và **edx** nếu là **32bit**
+The remainder of the division will be stored in **rdx** if it is **64bit** and **edx** if it is **32bit**
 
-Đề bài yêu cầu lưu phần dư vào rax **`mov rax,rdx`**
+The problem requires the remainder to be stored in rax **`mov rax,rdx`**
 
 ```python
 from pwn import *
@@ -153,10 +153,10 @@ p.interactive()
 
 > If we have `x % y`, and `y` is a power of 2, such as `2^n`, the result will be the lower `n` bits of `x`
 
-Giải thích đơn giản:
+Simple explanation:
 
-* Với **`x % 256`**, giá trị **256** là **282^8**. Điều này có nghĩa là kết quả của phép toán **`rdi % 256`** là giá trị của 8 bit thấp nhất của thanh ghi **`rdi`**.
-* Tương tự, với **`x % 65536`**, giá trị **65536** là **2162^16**. Kết quả của **`rsi % 65536`** là giá trị của 16 bit thấp nhất của thanh ghi **`rsi`**
+* For **`x % 256`**, the value of **256** is **282^8**. This means that the result of the operation **`rdi % 256`** is the value of the lowest 8 bits of the **`rdi`** register.
+* Similarly, for **`x % 65536`**, the value of **65536** is **2162^16**. The result of **`rsi % 65536`** is the value of the lowest 16 bits of the **`rsi`** register
 
 ```python
 from pwn import *
