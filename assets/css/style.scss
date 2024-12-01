@@ -1,0 +1,45 @@
+---
+---
+
+/*
+  If the number of TAB files has changed, the following variable is required.
+  And it must be defined before `@import`.
+*/
+$tab-count: {{ site.tabs | size | plus: 1 }}; // plus 1 for home tab
+
+@import "{{ site.theme }}";
+
+/* append your custom style below */
+
+:root {
+  /* I use these in code blocks. */
+  tab-size: 4;
+}
+
+.tooltip, h1[data-toc-skip] {
+  /* This can have multiple lines now. */
+  white-space: pre-line;
+}
+
+.share-label {
+  /* This actually looks a bit cleaner with the multi-line license text. */
+  vertical-align: text-bottom;
+}
+
+html:not([mode]), html[mode=light] {
+  --sidebar-highlight-color: rgba(35, 15, 219, 0.9);
+}
+
+@media (prefers-color-scheme: dark) {
+html:not([mode]) {
+  --sidebar-highlight-color: rgba(230, 192, 88, 0.9);
+}
+}
+
+html[mode=dark] {
+  --sidebar-highlight-color: rgba(230, 192, 88, 0.9);
+}
+
+#sidebar .sidebar-highlight a {
+  color: var(--sidebar-highlight-color);
+}
