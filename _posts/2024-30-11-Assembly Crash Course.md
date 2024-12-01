@@ -8,7 +8,6 @@ tags: [rev, pwn, pwntools, code]
 image:
   path: /assets/img/Assembly-Crash-Course/Assembly_Language.png
 ---
-
 ## set-register
 
 ```python
