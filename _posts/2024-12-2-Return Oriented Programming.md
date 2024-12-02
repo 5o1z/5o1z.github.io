@@ -200,7 +200,7 @@ As we can see in the pseudo-code above, what we need to do is bypass this condit
     return puts("Error: Incorrect value!");
 ```
 
-To do that we'll use ROPchains, which can help us control RDI, RSX, RDX, RCX registers which are used to save the value of the arguments for the function
+To do that we'll use ROPchains, which can help us control RDI, RSI, RDX, RCX, R8 and R9 registers which are used to save the value of the arguments for the function
 
 We can find what we need by using ROPchain tool. So the thing that we need here is passing argument 1 to the function so we can do:
 ```sh
