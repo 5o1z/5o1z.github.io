@@ -97,9 +97,9 @@ comments:
   # Giscus options › https://giscus.app
   giscus:
     repo:  5o1z/5o1z.github.io # <gh-username>/<repo>
-    repo_id: 896431985
+    repo_id: R_kgDONW53cQ
     category: Comments
-    category_id: 43200367
+    category_id: DIC_kwDONW53cc4Cky9v
     mapping: title  # optional, default to 'pathname'
     input_position: top # optional, default to 'bottom'
     lang: # optional, default to the value of `site.lang`
