@@ -209,6 +209,7 @@ We can find what we need by using ROPchain tool. So the thing that we need here 
 ```
 
 **Note: I use `scp` command to get the challenge file so I can easily analyze that file**
+
 With that information and combined with the pseudo-code that IDA give us we can easily write exploit script
 
 ### Exploit
