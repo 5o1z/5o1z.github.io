@@ -2,7 +2,7 @@
 title: Return Oriented Programming
 description: ROP is not just a hack; it’s a masterpiece of unauthorized orchestration, a ballet of borrowed instructions, choreographed with precision to achieve your clandestine objectives. With ROP, you step into a realm where every byte is a beat, and every return is a rhythm, embarking on an exhilarating journey of exploitation and discovery.
 author: 5o1z
-date: 2024-12-2 10:18 +0700
+date: 2024-12-2 10:30 +0700
 categories: [Practice, Pwn College]
 tags: [pwn, pwntools]
 image:
@@ -13,6 +13,7 @@ image:
 
 ### Description
 > Overwrite a return address to trigger a win function!
+
 ### Analysis
 ```sh
 This challenge reads in some bytes, overflows its stack, and allows you to perform a ROP attack. Through this series of
@@ -28,8 +29,10 @@ That means that you will need to input at least 48 bytes (28 to fill the buffer,
 12 to fill other stuff stored between the buffer and the return address,
 and 8 that will overwrite the return address).
 ```
+
 So like the description we need to overwrite the return address that make RIP point to win function address to execute it.
 Since this is the first challenge it will a little bit easy cuz we have all the information and we just need to write the exploit
+
 ### Exploit
 ```python
 #!/usr/bin/python3
@@ -97,10 +100,11 @@ That means that you will need to input at least 112 bytes (78 to fill the buffer
 26 to fill other stuff stored between the buffer and the return address,
 and 8 that will overwrite the return address).
 ```
+
 So in this challenge the exploit we need to write be able to call `win_stage_1` and `win_stage_2` together
 Remind **`Calling convention`**, when the function is called it will save the return address on the stack so with that idea, when we control RIP and make it executed `win_stage_1` function, we need to include the return address of `win_stage_2` function in our payload. So with that when the function is finished and reach `ret` instruction now the RIP will point to the top of the stack with now is the return address of `win_stage_2` function
 
-And the chain will look like this: challenge function --> ret --> win_stage_1 --> ret --> win_stage_2
+And the chain will look like this: **`challenge function --> ret --> win_stage_1 --> ret --> win_stage_2`**
 
 ### Exploit
 
@@ -174,6 +178,7 @@ and 8 that will overwrite the return address).
 ```
 
 So this challenge is a little bit harder than above, we need to inject the argument before we call that function
+
 So let's check a bit with IDA:
 
 ```c
@@ -194,7 +199,9 @@ int __fastcall win_stage_1(int a1)
   return close(fd);
 }
 ```
+
 As we can see in the pseudo-code above, what we need to do is bypass this condition:
+
 ```c
   if ( a1 != 1 )
     return puts("Error: Incorrect value!");
