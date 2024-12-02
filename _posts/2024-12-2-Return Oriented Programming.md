@@ -34,7 +34,7 @@ So like the description we need to overwrite the return address that make RIP po
 Since this is the first challenge it will a little bit easy cuz we have all the information and we just need to write the exploit
 
 ### Exploit
-```python
+```py
 #!/usr/bin/python3
 
 from pwn import *
