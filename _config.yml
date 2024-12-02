@@ -41,7 +41,7 @@ social:
     - https://github.com/5o1z # change to your github homepage
     - https://twitter.com/5o1z_ # change to your twitter homepage
     # Uncomment below to add more social links
-    # - https://www.facebook.com/username
+    - https://www.facebook.com/s0l.404
     # - https://www.linkedin.com/in/username
 
 google_site_verification: # fill in to your verification string
@@ -160,7 +160,7 @@ defaults:
   - scope:
       path: _drafts
     values:
-      comments: true
+      comments: false
   - scope:
       path: ""
       type: tabs # see `site.collections`
