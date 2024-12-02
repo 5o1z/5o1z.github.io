@@ -100,7 +100,7 @@ comments:
     repo_id: R_kgDONW53cQ
     category: Comments
     category_id: DIC_kwDONW53cc4Cky9v
-    mapping: title  # optional, default to 'pathname'
+    mapping: # optional, default to 'pathname'
     input_position: top # optional, default to 'bottom'
     lang: # optional, default to the value of `site.lang`
     reactions_enabled: 1 # optional, default to the value of `1`
@@ -160,7 +160,7 @@ defaults:
   - scope:
       path: _drafts
     values:
-      comments: true
+      comments: false
   - scope:
       path: ""
       type: tabs # see `site.collections`
