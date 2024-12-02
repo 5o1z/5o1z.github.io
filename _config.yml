@@ -96,7 +96,7 @@ comments:
     issue_term: # < url | pathname | title | ...>
   # Giscus options › https://giscus.app
   giscus:
-    repo:  5o1z/5o1z.github.io # <gh-username>/<repo>
+    repo: 5o1z/5o1z.github.io # <gh-username>/<repo>
     repo_id: R_kgDONW53cQ
     category: Comments
     category_id: DIC_kwDONW53cc4Cky9v
