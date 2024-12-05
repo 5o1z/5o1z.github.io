@@ -15,10 +15,10 @@ from pwn import *
 
 p = process(['/challenge/./run'])
 
-code = asm('mov rdi,0x1337', arch='amd64', os='linux)
+code = asm('mov rdi,0x1337', arch='amd64', os='linux')
 
  p.send(code)
- p.interactive() 
+ p.interactive()
 ```
 
 ## set-multiple-registers
@@ -35,7 +35,7 @@ code = asm('''
 ''', arch='amd64', os='linux)
 
  p.send(code)
- p.interactive() 
+ p.interactive()
 ```
 
 ## add-to-register
@@ -50,7 +50,7 @@ code = asm('''
 ''', arch='amd64', os='linux)
 
  p.send(code)
- p.interactive() 
+ p.interactive()
 ```
 
 ## linear-equation-registers
@@ -67,7 +67,7 @@ code = asm('''
 ''', arch='amd64', os='linux)
 
  p.send(code)
- p.interactive() 
+ p.interactive()
 ```
 
 ## integer-division
@@ -123,7 +123,7 @@ p.interactive()
 MSB                                    LSB
 +----------------------------------------+
 |                   rax                  |           <- 64 bit (8 bytes)
-+--------------------+-------------------+          
++--------------------+-------------------+
                      |        eax        |           <- 32 bit (4 bytes)
                      +---------+---------+
                                |   ax    |           <- 16 bit (2 bytes)
