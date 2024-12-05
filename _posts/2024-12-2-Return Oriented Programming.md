@@ -276,3 +276,25 @@ sl(pl)
 
 p.interactive()
 ```
+
+## Level 4.0
+
+### Description
+
+> Leverage a stack leak while crafting a ROP chain to obtain the flag!
+
+### Analysis
+
+Download the binary to your local machine for easy to analyze. Let's take a look at the binary:
+
+```sh
+➜  ROP checksec --file=babyrop_level4.0
+RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH      Symbols         FORTIFY Fortified       Fortifiable     FILE
+Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   89 Symbols        No    0               2               babyrop_level4.0
+➜  ROP file babyrop_level4.0
+babyrop_level4.0: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=18b5eeacd5e2090b30a989a321f20db703947e36, for GNU/Linux 3.2.0, not stripped
+```
+
+- No stack canary and PIE
+
+
