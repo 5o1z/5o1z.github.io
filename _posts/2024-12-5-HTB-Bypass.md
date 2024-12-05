@@ -2,7 +2,7 @@
 title: HTB-Bypass
 description: The Client is in full control. Bypass the authentication and read the key to get the Flag.
 author: 5o1z
-date: 2024-12-2 10:15 +0700
+date: 2024-12-5 11:48 +0700
 categories: [Practice, HTB]
 tags: [rev]
 image:
