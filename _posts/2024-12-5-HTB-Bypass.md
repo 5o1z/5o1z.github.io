@@ -104,13 +104,13 @@ Enter a password: password
 
 The program prompts us for a `username` and `password`, and we can use random strings for both. The program halts at the first breakpoint, and at the bottom of the screen, we can see that the values of the variables `flag` and `flag2` are both set to false. To proceed, we need to change the value of flags to true, allowing the program to move to the second breakpoint. By pressing `F10`, `dnSpy` will step over to the next instruction.
 
-[alt_text](/assets/img/HTB/Bypass/(1).png)
+![alt_text](/assets/img/HTB/Bypass/(1).png)
 
-[alt_text](/assets/img/HTB/Bypass/(2).png)
+![alt_text](/assets/img/HTB/Bypass/(2).png)
 
 The program prompts us to input the `secret key`, and we can again use a random string. After entering the `secret key`, the program halts at the second breakpoint. At the bottom of the screen, we can see that the value of the flag variable is still `false`, while b is equal to `1234` (the string we entered). To proceed, we need to change the flag variable to true, allowing the program to move to the next instruction. By pressing F10, `dnSpy` will step over to the next
 
-[alt_text](/assets/img/HTB/Bypass/(3).png)
+![alt_text](/assets/img/HTB/Bypass/(3).png)
 
 ```sh
 Enter a username: username
