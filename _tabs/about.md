@@ -4,10 +4,11 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-- 🪄 I'm `Sol (aka Alter)`
-- 🐏 My zodiac: `Aries♈`
-- 🔭 I’m currently learning `pwn & rev`.
-- 🌱 My goal is to become a `Security Researcher`
-- 💬 I am a `Leader & Co-Founder | Gang de la Sinfonia (GDLS | SYGG)  &  Night Sentinels`
-- ⚙️ Hobby: `Hacking`, `Listening to music` and `Photography`
-- ♾️ `Dream` -> `Fuel` -> `Explore` -> `Hack` -> `Repeat`
+🪄 Hi, I'm Sol (aka Alter).
+♈ Zodiac: Aries
+🔭 Currently focused on advancing skills in reverse engineering and binary exploitation.
+🌱 Aspiring to become a skilled Security Researcher.
+💼 Leader & Co-Founder of Gang de la Sinfonia (GDLS | SYGG) and Night Sentinels.
+🎯 Passionate about hacking, uncovering vulnerabilities, and pushing boundaries in cybersecurity.
+🎶 Outside of hacking, I find inspiration in music and photography.
+♾️ My mantra: Dream ➡️ Fuel ➡️ Explore ➡️ Hack ➡️ Repeat.
