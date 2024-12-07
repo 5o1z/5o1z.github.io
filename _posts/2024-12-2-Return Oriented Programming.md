@@ -2,7 +2,7 @@
 title: Return Oriented Programming
 description: ROP is not just a hack; it’s a masterpiece of unauthorized orchestration, a ballet of borrowed instructions, choreographed with precision to achieve your clandestine objectives. With ROP, you step into a realm where every byte is a beat, and every return is a rhythm, embarking on an exhilarating journey of exploitation and discovery.
 author: 5o1z
-date: 2024-12-7 11:22 +0700
+date: 2024-12-2 11:22 +0700
 categories: [Practice, Pwn College]
 tags: [pwn, pwntools]
 image:
@@ -12,9 +12,11 @@ image:
 ## Level 1.0
 
 ### Description
+
 > Overwrite a return address to trigger a win function!
 
 ### Analysis
+
 ```sh
 This challenge reads in some bytes, overflows its stack, and allows you to perform a ROP attack. Through this series of
 challenges, you will become painfully familiar with the concept of Return Oriented Programming!
@@ -34,6 +36,7 @@ So like the description we need to overwrite the return address that make RIP po
 Since this is the first challenge it will a little bit easy cuz we have all the information and we just need to write the exploit
 
 ### Exploit
+
 ```py
 #!/usr/bin/python3
 
@@ -87,7 +90,9 @@ p.interactive()
 ## Level 2.0
 
 ### Description
+
 > Use ROP to trigger a two-stage win function!
+
 ### Analysis
 
 ```sh
@@ -156,9 +161,11 @@ pl += p64(exe.sym['win_stage_2'])
 sl(pl)
 p.interactive()
 ```
+
 ## Level 3.0
 
 ### Description
+
 > Use ROP to trigger a multi-stage win function!
 
 ### Analysis
@@ -210,6 +217,7 @@ As we can see in the pseudo-code above, what we need to do is bypass this condit
 To do that we'll use ROPchains, which can help us control RDI, RSI, RDX, RCX, R8 and R9 registers which are used to save the value of the arguments for the function
 
 We can find what we need by using ROPchain tool. So the thing that we need here is passing argument 1 to the function so we can do:
+
 ```sh
 ➜  ROP ROPgadget --binary babyrop_level3.0 | grep "pop rdi"
 0x0000000000402a93 : pop rdi ; ret
@@ -220,6 +228,7 @@ We can find what we need by using ROPchain tool. So the thing that we need here 
 With that information and combined with the pseudo-code that IDA give us we can easily write exploit script
 
 ### Exploit
+
 ```py
 #!/usr/bin/python3
 
@@ -321,7 +330,7 @@ For nothing, but my experience while doing this is `when we have something leak,
 
 My idea for this level is use `chmod` syscall to give all permissions to `/flag`. But we need to note that the `chmod` syscall first `argv` must be `pointer` to `/flag` (According to [here](https://www.chromium.org/chromium-os/developer-library/reference/linux-constants/syscalls/#x86_64_90))
 
-# Exploit
+## Exploit
 
 ```py
 #!/usr/bin/python3
