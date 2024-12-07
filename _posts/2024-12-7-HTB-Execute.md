@@ -1,8 +1,8 @@
 ---
-title: HTB-Bypass
+title: HTB-Execute
 description: Using XOR bitwise operation to hide shellcode, and other ways to pass values ​​to registers.
 author: 5o1z
-date: 2024-12-7 5:48 +0700
+date: 2024-12-7 6:34 +0700
 categories: [Practice, HTB]
 tags: [pwn, pwntools, shellcode]
 image:
