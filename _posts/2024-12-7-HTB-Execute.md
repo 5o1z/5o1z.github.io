@@ -85,9 +85,17 @@ In the main function, we can see that there is a blacklist here:
 char blacklist[] = "\x3b\x54\x62\x69\x6e\x73\x68\xf6\xd2\xc0\x5f\xc9\x66\x6c\x61\x67";
 ```
 
-And when we look at the end of the code we can see this `( ( void (*) () ) buf) ();`. The line `((void (*)()) buf)();` casts `buf` to a function pointer of type `void (*)()`, then immediately invokes it, executing the machine code stored in the memory buffer `buf`.
+At the end of the code, we encounter the statement:
 
-For example this might be look like this in the shellcode:
+```c
+((void (*)()) buf)();
+```
+
+This line performs two critical operations in a single step. First, it casts the `buf` variable to a function pointer of type `void (*)()`. This specific type indicates a function that takes no arguments and returns nothing (a void function). Second, it immediately invokes the function pointer, effectively executing the machine code that resides in the memory buffer `buf`.
+
+This technique is commonly used in exploit development to execute `shellcode`. The `buf` buffer is typically loaded with malicious machine code (the `shellcode`), and casting it to a function pointer allows the program to treat the buffer as if it were a legitimate function. This bypasses the need for explicit code injection, instead leveraging the memory space already allocated for `buf`.
+
+For example this might be look like this:
 
 ```c
 #include <stdio.h>
@@ -109,11 +117,9 @@ int main() {
 }
 ```
 
-Back to the challenge, with `( ( void (*) () ) buf) ();` we can still execute our shellcode while we don't need to overwrite the RIP. The Stack Canary is enabled here, but just need to focus on how to execute the shellcode
-
 ### Shellcode
 
-So there is a filter here so the easy way is craft a simple shellcode to see which bytes are filtered:
+Back the our challenge, there is a filter here so the easy way is craft a simple `shellcode` to see which bytes are filtered:
 
 ```py
 from pwn import *
@@ -237,10 +243,24 @@ ASCII --> ;
 <...>
 ```
 
-We can see that most parts of our shellcode are filtered (syscall number, /bin/sh...). This make me confuse and take a lot of time to research how to bypass that filter. After a hours of research I found that we can use `XOR` to hide `/bin/sh` because when we somehow find they key that can XOR with `/bin/sh` without returning NULL byte we can be able to bypass this.
-For example, `/bin/sh ^ KEY = STH`. To get `/bin/sh` we just do the opposite `KEY ^ STH = /bin/sh` with this, the opcode of the our shellcode now is different from the old one, so that we don't have any bad bytes here.
+We can see that most parts of our shellcode are filtered (syscall number, /bin/sh...). This make me confuse and take a lot of time to research how to bypass that filter. After several hours of research, I discovered a clever solution: using the `XOR` operation to encode `/bin/sh` and "hide" it within the `shellcode`. The idea is to encode the string `/bin/sh` with a carefully chosen `XOR` key, so the resulting encoded string no longer contains any filtered or bad bytes. During runtime, the `shellcode` can decode `/bin/sh` back to its original form by applying the `XOR` operation again with the same key.
 
-But the problem is how we can find their key that XOR with `/bin/sh` does not give null byte. I start with `0xffffffffffffffff`. Luckily, there is no bad byte here when I run the shellcode exploit again:
+Here’s how the XOR encoding works:
+
+- Let `/bin/sh` represent the original string to encode.
+- Choose a key such that when `/bin/sh` is `XOR-ed` with this key, the result contains no bad bytes (e.g., null bytes, restricted characters, or other filtered bytes).
+- The encoding operation is:
+
+```sh
+/bin/sh ^ KEY = ENCODED_STRING
+```
+- During shellcode execution, we reverse the operation to decode the string back:
+
+```sh
+KEY ^ ENCODED_STRING = /bin/sh
+```
+
+By encoding `/bin/sh` in this manner, the opcodes of our shellcode are effectively altered. This allows the encoded `shellcode` to pass the filtering checks, as the raw bytes no longer directly match `/bin/sh` or contain restricted characters. But the problem is how we can find their key that XOR with `/bin/sh` does not give bad bytes. I start with `0xffffffffffffffff`. Luckily, there is no bad bytes here when I run the exploit again:
 
 - Shellcode:
 
@@ -277,7 +297,7 @@ ASCII --> ;
 <...>
 ```
 
-Only bad bytes left for `syscall` and `argv` parts. For `syscall` part, we can use `0x3a` instead of `0x3b`, push it into the Stack then add `0x1` to it. And for `argv` part, we can push `0x0` straight onto the stack then pop it into the necessary registers. Or we can push a rax to the stack (rax register here is set to NULL which `0x0` in it because we haven't set the value for it yet)
+Only bad bytes left for `syscall` and `argv` parts. For `syscall` part, we can use `0x3a` instead of `0x3b`, push it into the Stack then add `0x1` to it. And for `argv` part, we can push `0x0` straight onto the stack then pop it into the necessary registers. Or we can push a `rax` to the stack (rax register here is set to NULL which `0x0` in it because we haven't set the value for it yet)
 
 ```nasm
     mov rdi, 0xff978cd091969dd0
