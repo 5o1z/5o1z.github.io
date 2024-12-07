@@ -1,1 +1,45 @@
 
+--- --- @import 'main';
+
+/* append your custom style below */
+pre {
+  tab-size: 2;
+}
+
+#sidebar {
+  background: url('/assets/img/misc/sidebar.jpg');
+  background-size: cover;
+
+  .site-title {
+    a {
+      @extend %clickable-transition;
+      @extend %sidebar-link-hover;
+      color: #bbbbbb;
+      text-decoration: none;
+    }
+  }
+
+  ul {
+    a {
+      color: #ddd;
+      // background-color: #4a4a4a30;
+      background-color: #a4a4a430;
+    }
+  }
+}
+
+#main-wrapper:after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: url('/assets/img/misc/hare.png');
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.04;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
