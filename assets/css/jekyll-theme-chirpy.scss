@@ -1,6 +1,18 @@
 
---- --- @import 'main';
+@import 'main';
+@use 'main' {
+    {
+    % if jekyll.environment=='production' %
+  }
 
+  .bundle {
+    // Add production-specific styles here
+  }
+
+    {
+    % endif %
+  }
+};
 /* append your custom style below */
 pre {
   tab-size: 2;
