@@ -330,7 +330,7 @@ For nothing, but my experience while doing this is `when we have something leak,
 
 My idea for this level is use `chmod` syscall to give all permissions to `/flag`. But we need to note that the `chmod` syscall first `argv` must be `pointer` to `/flag` string (According to [here](https://www.chromium.org/chromium-os/developer-library/reference/linux-constants/syscalls/#x86_64_90))
 
-## Exploit
+### Exploit
 
 ```py
 #!/usr/bin/python3
