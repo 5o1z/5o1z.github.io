@@ -13,4 +13,3 @@ order: 4
 - 🎶 Outside of `hacking`, I find inspiration in `music` and `photography`.
 - ♾️ My mantra: `Dream` ➡️ `Fuel` ➡️ `Explore` ➡️ `Hack` ➡️ `Repeat`.
 
-![alt_text](https://media.tenor.com/GLZZKZJyJAEAAAAd/dance-dancing-duck.gif)
