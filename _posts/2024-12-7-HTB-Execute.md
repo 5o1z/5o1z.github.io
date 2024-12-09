@@ -1,5 +1,5 @@
 ---
-title: HTB-Execute
+title: HTB - Execute
 description: Using XOR operation to hide shellcode, and other ways to pass values ​​to registers.
 author: 5o1z
 date: 2024-12-7 6:34 +0700

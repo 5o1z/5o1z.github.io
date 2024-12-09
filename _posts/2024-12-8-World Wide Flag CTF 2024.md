@@ -1,5 +1,5 @@
 ---
-title: World Wide Flag CTF 2024
+title: World Wide Flag CTF 2024 - PWN
 description: Just some pwn challenges I have solved after the CTF ended because of busyness
 author: 5o1z
 date: 2024-12-7 6:34 +0700

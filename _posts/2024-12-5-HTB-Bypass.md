@@ -1,5 +1,5 @@
 ---
-title: HTB-Bypass
+title: HTB - Bypass
 description: Analyze .NET file assemblies.
 author: 5o1z
 date: 2024-12-5 11:48 +0700
