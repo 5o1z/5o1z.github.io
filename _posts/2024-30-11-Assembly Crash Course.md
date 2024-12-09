@@ -3,7 +3,7 @@ title: Assembly Crash Course
 description: Practice for NASM
 author: 5o1z
 date: 2024-11-30 9:41 +0700
-categories: [Practice, Pwn College]
+categories: [Pwn College]
 tags: [rev, pwn, pwntools, code]
 image:
   path: /assets/img/Assembly-Crash-Course/Assembly_Language.png

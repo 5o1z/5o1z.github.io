@@ -3,7 +3,7 @@ title: Return Oriented Programming
 description: ROP is not just a hack; it’s a masterpiece of unauthorized orchestration, a ballet of borrowed instructions, choreographed with precision to achieve your clandestine objectives. With ROP, you step into a realm where every byte is a beat, and every return is a rhythm, embarking on an exhilarating journey of exploitation and discovery.
 author: 5o1z
 date: 2024-12-2 11:22 +0700
-categories: [Practice, Pwn College]
+categories: [Pwn College]
 tags: [pwn, pwntools]
 image:
   path: /assets/img/Assembly-Crash-Course/Assembly_Language.png

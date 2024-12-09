@@ -3,7 +3,7 @@ title: HTB-Execute
 description: Using XOR operation to hide shellcode, and other ways to pass values ​​to registers.
 author: 5o1z
 date: 2024-12-7 6:34 +0700
-categories: [Practice, HTB]
+categories: [HTB, Pwn]
 tags: [pwn, pwntools, shellcode]
 image:
   path: /assets/img/HTB/OIP.jpg

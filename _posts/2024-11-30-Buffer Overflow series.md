@@ -3,7 +3,7 @@ title: Buffer Overflow series
 description: Just a series of BOF
 author: 5o1z
 date: 2024-11-30 9:51 +0700
-categories: [Practice, PicoCTF]
+categories: [PicoCTF, Pwn]
 tags: [pwn, pwntools, code]
 image:
   path: /assets/img/picoCTF/picoctf.png

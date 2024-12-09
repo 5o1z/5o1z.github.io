@@ -3,7 +3,7 @@ title: HTB-Bypass
 description: Analyze .NET file assemblies.
 author: 5o1z
 date: 2024-12-5 11:48 +0700
-categories: [Practice, HTB]
+categories: [HTB, Reverse]
 tags: [rev]
 image:
   path: /assets/img/HTB/OIP.jpg

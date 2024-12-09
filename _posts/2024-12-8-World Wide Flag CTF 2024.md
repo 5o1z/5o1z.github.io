@@ -3,8 +3,8 @@ title: World Wide Flag CTF 2024
 description: Just some pwn challenges I have solved after the CTF ended because of busyness
 author: 5o1z
 date: 2024-12-7 6:34 +0700
-categories: [CTF Write ups]
-tags: [pwn, pwntools, shellcode]
+categories: [CTF Write ups, Pwn]
+tags: [pwn, pwntools]
 image:
   path: /assets/img/WWF/image.png
 ---
