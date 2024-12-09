@@ -119,7 +119,7 @@ int main() {
 
 ### Shellcode
 
-Back the our challenge, there is a filter here so the easy way is craft a simple `shellcode` to see which bytes are filtered:
+Back to our challenge, there is a filter here so the easy way is craft a simple `shellcode` to see which bytes are filtered:
 
 ```py
 from pwn import *
@@ -132,8 +132,6 @@ from pwn import *
 
 context.log_level = 'debug'
 exe = context.binary = ELF('./execute', checksec=False)
-
-
 
 # Shorthanding functions for input/output
 info = lambda msg: log.info(msg)
@@ -166,11 +164,6 @@ if args.GDB:
 # ===========================================================
 #                          EXPLOIT
 # ===========================================================
-
-# Use when leaked is needed
-# p.recvuntil(b'at: ')
-# stack_leak = int(p.recvuntil(b'.', drop=True), 16) # Adjust this
-# log.info("Stack leak: " + hex(stack_leak))
 
 blacklist = b"\x3b\x54\x62\x69\x6e\x73\x68\xf6\xd2\xc0\x5f\xc9\x66\x6c\x61\x67"
 
