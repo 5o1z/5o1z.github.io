@@ -16,7 +16,7 @@ timezone: Asia/Saigon
 
 title: 5o1z # the main title
 
-tagline: A guy who is passionate about Binary Exploitation and Reverse Engineering # it will display as the subtitle
+tagline: A guy who is passionate about Binary Exploitation # it will display as the subtitle
 
 description: >- # used by seo meta and the atom feed
   5o1z's blog site
