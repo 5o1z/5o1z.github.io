@@ -10,7 +10,7 @@ category: "CTF Write ups"
 
 Vậy là cũng đã hết Tết, sau một thời gian lười dài ơi là dài thì mình quyết định bắt đầu viết full write up cho giải `VSL Internal CTF 2025` được tổ chức bởi `VKU`. Trong giải này mình đã may mắn được tham gia cùng các anh chị `EHC`, và cùng nhau được top 2
 
-![alt text](/images/VSL/image-1.png)
+![alt text](/img/VSL/image-1.png)
 
 Dưới đây sẽ là phần giải của mình cho tất cả những bài pwn mình làm được, kèm theo lời giải thích ngắn gọn
 

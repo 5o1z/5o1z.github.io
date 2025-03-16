@@ -11,7 +11,7 @@ Sau giải này thì cảm xúc lẫn lộn, cũng là lần đầu tiên mình 
 
 # Blackjack
 
-![alt text](/images/EHCTF/image.png)
+![alt text](/img/EHCTF/image.png)
 
 ## Reverse Engineering
 
@@ -307,7 +307,7 @@ After going below INT_MIN: 2147483647
 
 # Secret
 
-![alt text](/images/EHCTF/image-1.png)
+![alt text](/img/EHCTF/image-1.png)
 
 ## Analysis
 
@@ -383,7 +383,7 @@ EHCTF{how_cAN_yoU_S3E_thlS_seCre7_ad5cd203a6d0}
 
 # ezpwn
 
-![alt text](/images/EHCTF/image-2.png)
+![alt text](/img/EHCTF/image-2.png)
 
 ## Reverse Engineering
 
@@ -513,7 +513,7 @@ EHCTF{JU57_4_rAndOM_fUNC710N_XD_d8ff192d6a83}
 
 # Chỉ là XOR
 
-![alt text](/images/EHCTF/image-3.png)
+![alt text](/img/EHCTF/image-3.png)
 
 Do gần đây cũng có ý định luyện tập thêm một chút kĩ năng REV nên mình đã thử sức mình với một số challenge REV ở giải, và chỉ có bài này là mình giải được...
 
