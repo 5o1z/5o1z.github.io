@@ -11,7 +11,7 @@ Sau giải này thì cảm xúc lẫn lộn, cũng là lần đầu tiên mình 
 
 # Blackjack
 
-![alt text](/img/EHCTF/image.png)
+![alt](/img/EHCTF/image.png)
 
 ## Reverse Engineering
 
@@ -513,7 +513,7 @@ EHCTF{JU57_4_rAndOM_fUNC710N_XD_d8ff192d6a83}
 
 # Chỉ là XOR
 
-![alt text](/img/EHCTF/image-3.png)
+![alt](/img/EHCTF/image-3.png)
 
 Do gần đây cũng có ý định luyện tập thêm một chút kĩ năng REV nên mình đã thử sức mình với một số challenge REV ở giải, và chỉ có bài này là mình giải được...
 

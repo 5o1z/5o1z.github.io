@@ -29,7 +29,7 @@ defaults:
   # Site logo
   logo: /images/favicon.ico
   # Site avatar
-  avatar: /images/favicon.ico
+  avatar: /images/favicon.svg
 # IMAGE CONFIGURATION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< end
 
 
