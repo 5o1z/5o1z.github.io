@@ -1,5 +1,5 @@
 ---
-title: "[WRITE UP] - ASCIS 2024"
+title: "[WRITE UP] - ASCIS Final 2024"
 date: 2025-03-13 11:55:00
 tags:
   - PWN

@@ -272,7 +272,7 @@ home:
 articles:
   # Set the styles of the article
   style:
-    font_size: 18px # Font size
+    font_size: 16px # Font size
     line_height: 1.5 # Line height
     image_border_radius: 15px # image border radius
     image_alignment: center # image alignment. left, center
@@ -344,7 +344,7 @@ articles:
 # Docs: https://redefine-docs.ohevan.com/posts/comment
 comment:
   # Whether to enable comment
-  enable: true
+  enable: false
   # Comment system
   system: waline # waline, gitalk, twikoo, giscus
   # System configuration
