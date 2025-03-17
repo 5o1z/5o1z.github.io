@@ -1,11 +1,13 @@
 ---
-title: "[WRITE UP] - Pico CTF 2025"
+title: "[WRITE UP] - PicoCTF 2025"
 date: 2025-03-17 11:55:00
 tags:
   - PWN
   - REV
 category: "CTF Write ups"
 ---
+
+Write up các bài trên 200 điểm mình solve được trong PicoCTF năm nay
 
 # Binary Exploitation
 
