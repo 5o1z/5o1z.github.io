@@ -683,7 +683,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 }
 ```
 
-The program is symble just get our input using `read` and we have `Buffer Overflow` here, and we see that it have `install_filter()` function here so maybe it has `seccomp rule` (we need to check it)
+The program is simple just get our input using `read` and we have `Buffer Overflow` here, and we see that it have `install_filter()` function here so maybe it has `seccomp rule` (we need to check it)
 
 ```sh
 └ ϟ seccomp-tools dump ./chal                                                                                                                                                                                                  took 82.295s
