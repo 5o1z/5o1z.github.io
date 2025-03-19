@@ -213,6 +213,9 @@ navbar:
       submenus:
         Me: /about
         Github: https://github.com/5o1z
+    Bookmarks:
+      icon: fa-solid fa-bookmark
+      path: /bookmarks/
     #     Blog: https://ohevan.com
     #     Friends: /friends
     # Links:
@@ -295,7 +298,7 @@ articles:
   # Author label
   author_label:
     enable: true # Whether to enable
-    auto: false # Whether to automatically add author label, e.g. Lv1, Lv2, Lv3...
+    auto: true # Whether to automatically add author label, e.g. Lv1, Lv2, Lv3...
     list: []
   # Code block settings
   code_block:

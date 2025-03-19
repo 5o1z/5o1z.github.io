@@ -1,0 +1,11 @@
+- category: Tools
+  icon: fa-tools # Tools category icon
+  items:
+    - name: ChatGPT
+      link: https://chat.openai.com # Bookmark URL
+      description: OpenAI's AI chat assistant
+      image: https://chat.openai.com/favicon.ico # Website icon URL
+    - name: Claude
+      link: https://www.anthropic.com/
+      description: Anthropic's AI chat assistant
+      image: https://www.anthropic.com/favicon.ico
