@@ -208,14 +208,14 @@ navbar:
     # Status:
     #   path: https://status.ohevan.com/
     #   icon: fa-regular fa-chart-bar
+    Bookmarks:
+      icon: fa-solid fa-bookmark
+      path: /bookmarks/
     About:
       icon: fa-regular fa-user
       submenus:
         Me: /about
         Github: https://github.com/5o1z
-    Bookmarks:
-      icon: fa-solid fa-bookmark
-      path: /bookmarks/
     #     Blog: https://ohevan.com
     #     Friends: /friends
     # Links:
