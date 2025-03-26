@@ -15,7 +15,7 @@ info:
   # Site subtitle
   subtitle: The Forgotten Legacy
   # Author name
-  author: *ptr
+  author: "*ptr"
   # Site URL
   url: https://5o1z.github.io
 # BASIC INFORMATION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< end
