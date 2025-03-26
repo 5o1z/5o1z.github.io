@@ -15,7 +15,7 @@ info:
   # Site subtitle
   subtitle: The Forgotten Legacy
   # Author name
-  author: Alter
+  author: *ptr
   # Site URL
   url: https://5o1z.github.io
 # BASIC INFORMATION <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< end
@@ -125,8 +125,8 @@ home_banner:
   style: fixed # static or fixed
   # Home banner image
   image:
-    light: /images/wallhaven-wqery6-dark.webp # light mode
-    dark: /images/wallhaven-wqery6-dark.webp # dark mode
+    light: /images/background.webp # light mode
+    dark: /images/background.webp # dark mode
   # Home banner title
   title: ✧ Alter ✧
   # Home banner subtitle
