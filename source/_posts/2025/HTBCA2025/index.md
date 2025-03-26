@@ -1009,7 +1009,7 @@ Then is let the program return to `win` function. If we look carefully in option
 .text:000000000000197E                 add     eax, 1
 ```
 
-This is like `*alloca + 0x118`, which is location of `s->speciality`, so that means `speciality + 0x20 == saved RIP` or `*alloca + 0x118 + 0x20 == saved RIP`. So what we need to do is overwrite that `buf pointer` to make it be `*alloca + 0x118 + 0x20` (we just can overwrite 1 byte). And according to the `disassembly` I can calculate that 1 byte we need to overwrite is `0x1f` because after it successfully overwrite saved RIP it'll `i + 1` to it
+This is like `*alloca + 0x118`, which is location of `s->speciality`, so that means `speciality + 0x20 + 0x20 == saved RIP` or `*alloca + 0x118 + 0x20 + 0x20 == saved RIP`. So what we need to do is overwrite that `buf pointer` to make it be `*alloca + 0x118 + 0x20` (we just can overwrite 1 byte) because we can just let our input reach `buf pointer`. And according to the `disassembly` I can calculate that 1 byte we need to overwrite is `0x1f` because after it successfully overwrite saved RIP it'll `i + 1` to it
 
 ```gdb
 21:0108│-048 0x7ffccba40a08 ◂— 0x42424242424242 /* 'BBBBBBB' */
