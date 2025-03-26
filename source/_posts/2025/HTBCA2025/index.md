@@ -21,7 +21,7 @@ Tags:
 
 ### Reverse Engineering
 
-```console
+```sh
 [*] '/mnt/e/sec/CTFs/2025/HTBCA/QuackQuack/challenge/quack_quack'
     Arch:       amd64-64-little
     RELRO:      Full RELRO
@@ -177,7 +177,7 @@ Tags:
 
 ### Reverse Engineering
 
-```console
+```sh
 [*] '/mnt/e/sec/CTFs/2025/HTBCA/pwn_blessing/challenge/blessing'
     Arch:       amd64-64-little
     RELRO:      Full RELRO
@@ -317,7 +317,7 @@ Tags:
 
 ### Reverse Engineering
 
-```console
+```sh
 [*] '/mnt/e/sec/CTFs/2025/HTBCA/pwn_laconic/challenge/laconic'
     Arch:       amd64-64-little
     RELRO:      No RELRO
@@ -477,7 +477,7 @@ Tags:
 
 ### Reverse Engineering
 
-```console
+```sh
 [*] '/mnt/e/sec/CTFs/2025/HTBCA/pwn_crossbow/challenge/crossbow'
     Arch:       amd64-64-little
     RELRO:      Partial RELRO
@@ -731,7 +731,7 @@ Tags:
 
 ### Reverse Engineering
 
-```console
+```sh
 [*] '/mnt/e/sec/CTFs/2025/HTBCA/pwn_contractor/challenge/contractor'
     Arch:       amd64-64-little
     RELRO:      Full RELRO
