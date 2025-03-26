@@ -125,7 +125,7 @@ home_banner:
   style: fixed # static or fixed
   # Home banner image
   image:
-    light: /images/wallhaven-wqery6-dark.web # light mode
+    light: /images/wallhaven-wqery6-dark.webp # light mode
     dark: /images/wallhaven-wqery6-dark.webp # dark mode
   # Home banner title
   title: ✧ Alter ✧
