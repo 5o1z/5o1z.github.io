@@ -190,9 +190,9 @@ LABEL_14:
 This is the function that takes care of the main job for a simulation computer. In this function, it will process the expression we enter from the previous function. So let me break down the main parts of this function.
 
 ```c
-    token_start = expr;
-    v6 = 0;
-    bzero(operator, 0x64u);
+token_start = expr;
+v6 = 0;
+bzero(operator, 0x64u);
 for ( i = 0; ; ++i )
 {
   if ( expr[i] - (unsigned int)'0' > 9 )
