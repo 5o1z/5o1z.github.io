@@ -1,6 +1,6 @@
 ---
 title: "[PWNABLE.TW] - calc"
-date: 2025-02-01 6:55:00
+date: 2025-03-30 6:55:00
 tags:
   - PWN
 category: "Wargame"
@@ -33,7 +33,7 @@ So let's playing with `checksec` first:
 
 Look at the result we know this is a `i386` binary with `Canary` and no `PIE`. The `PIE` is disable so we don't need to worry about the address because it's fixed. So next, let's decompile this binary in IDA and analysis:
 
-### Main function
+### main function
 
 ```c
 int __cdecl main(int argc, const char **argv, const char **envp)
