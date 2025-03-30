@@ -5,7 +5,7 @@ tags:
   - PWN
 category: "Wargame"
 ---
-This is a pretty terrible challenge for people who are not good at reverse engineering. And I had to watch the write up to solve this challenge. But in the end, what I got was a little improvement in my reverse engineering skills.
+This is a pretty terrible challenge for people who are not good at reverse engineering. And I had to read the write up to solve this challenge. But in the end, what I got was a little improvement in my reverse engineering skills.
 
 ## Challenge Information
 Description: `Have you ever use Microsoft calculator?`
