@@ -1329,7 +1329,7 @@ I use this one to make it jump back to `__libc_csu_init+56` so that's why you se
 
 To understand what I'm saying, I highly reccommend debug my payload. If you want to ask you can DM my discord [here](https://discordapp.com/users/590715913939189765)
 
-## Full exploit
+### Full exploit
 
 ```py
 #!/usr/bin/env python3
@@ -1486,7 +1486,7 @@ if __name__ == '__main__':
     exploit()
 ```
 
-## Get flag
+### Get flag
 
 ```sh
 [*] '/mnt/e/sec/CTFs/2025/TamuCTF/Debug2/libc.so.6'
