@@ -765,7 +765,7 @@ def csu():
 
 ### Bonus
 
-After this solution I read some solutions from other participants. I realized that we can use SROP, because when the `read` function finishes reading our string the value it returns will be the number of bytes it read. Still the same but here we will use SROP to call mprotect with `syscall; ret` taken from our first shellcode (since the address is fixed we can take it freely). Then deploy a shellcode with 0xf bytes to setup RAX. Finally read the ORW shellcode in and execute it
+After this solution I read some solutions from other participants (you can visit this guy [write-up](https://deltabluejay.me/posts/Seven/)). I realized that we can use SROP, because when the `read` function finishes reading our string the value it returns will be the number of bytes it read. Still the same but here we will use SROP to call mprotect with `syscall; ret` taken from our first shellcode (since the address is fixed we can take it freely). Then deploy a shellcode with 0xf bytes to setup RAX. Finally read the ORW shellcode in and execute it
 
 ```py
 def srop():
