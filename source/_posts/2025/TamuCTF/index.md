@@ -1327,7 +1327,7 @@ I use this one to make it jump back to `__libc_csu_init+56` so that's why you se
     interactive()
 ```
 
-To understand what I'm saying, I highly reccommend debug my payload. If you want to ask you can DM my discord [here](https://discordapp.com/users/590715913939189765)
+To understand what I'm saying, I highly reccommend debug my payload. If you want to ask you can DM to my [discord](https://discordapp.com/users/590715913939189765)
 
 ### Full exploit
 

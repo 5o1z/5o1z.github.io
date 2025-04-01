@@ -131,12 +131,12 @@ home_banner:
   title: ✧ Alter ✧
   # Home banner subtitle
   subtitle:
-    text: ["Pwn is art, and the pwner is the artist", "Think like an attacker, act like a researcher", "The best defense is understanding the offense", "Exploit the Unknown, Dominate the Known"] # subtitle text, array
+    text: ["Pwn is an art, and the pwner is the artist", "Think like an attacker, act like a researcher", "The best defense is understanding the offense", "Exploit the Unknown, Dominate the Known", "Inside every pwner is a fire no one can put out", "Born to burn, built to pwn", "I don't pwn for glory — I pwn 'cause I can"] # subtitle text, array
     hitokoto:  # 一言配置
       enable: false # Whether to enable hitokoto
       show_author: false # Whether to show author
       api: https://v1.hitokoto.cn # API URL, can add types, see https://developer.hitokoto.cn/sentence/#%E5%8F%A5%E5%AD%90%E7%B1%BB%E5%9E%8B-%E5%8F%82%E6%95%B0
-    typing_speed: 100 # Typing speed (ms)
+    typing_speed: 105 # Typing speed (ms)
     backing_speed: 80 # Backing speed (ms)
     starting_delay: 500 # Start delay (ms)
     backing_delay: 1500 # Backing delay (ms)
