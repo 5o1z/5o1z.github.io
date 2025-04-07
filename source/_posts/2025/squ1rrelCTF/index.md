@@ -1249,85 +1249,85 @@ elf.run()
 
 These are 2 source code that we have. So look at the second one, we know that our input must be in base64, and the first one contains the main function of  this. So let's break down the first one. Because this file is too long, I will only analyze the main function in this file.
 
-`parse()` function:
+- `parse()` function:
 
-```py
-def parse(data: bytes, blacklist_segments: list[int] = []) -> Elf:
-    data = bytearray(data)
-    header = Header.from_buffer(data)
+    ```py
+    def parse(data: bytes, blacklist_segments: list[int] = []) -> Elf:
+        data = bytearray(data)
+        header = Header.from_buffer(data)
 
-    # these dont actually matter but oh well
-    if header.e_ident[constants.EI_CLASS] != constants.ELFCLASS64:
-        raise ValidationException("must have 64 bit class")
+        # these dont actually matter but oh well
+        if header.e_ident[constants.EI_CLASS] != constants.ELFCLASS64:
+            raise ValidationException("must have 64 bit class")
 
-    if header.e_ident[constants.EI_DATA] != constants.ELFDATA2LSB:
-        raise ValidationException("must be little endian")
+        if header.e_ident[constants.EI_DATA] != constants.ELFDATA2LSB:
+            raise ValidationException("must be little endian")
 
-    if header.e_ehsize != sizeof(Header):
-        raise ValidationException("bad header size")
+        if header.e_ehsize != sizeof(Header):
+            raise ValidationException("bad header size")
 
-    if header.e_shentsize != sizeof(Section):
-        raise ValidationException("bad section size")
+        if header.e_shentsize != sizeof(Section):
+            raise ValidationException("bad section size")
 
-    if header.e_phentsize != sizeof(Segment):
-        raise ValidationException("bad segment size")
+        if header.e_phentsize != sizeof(Segment):
+            raise ValidationException("bad segment size")
 
-    # important checks
-    if header.e_ident[constants.EI_MAG0] != constants.ELFMAG0:
-        raise ValidationException("bad elf magic")
+        # important checks
+        if header.e_ident[constants.EI_MAG0] != constants.ELFMAG0:
+            raise ValidationException("bad elf magic")
 
-    if header.e_ident[constants.EI_MAG1] != constants.ELFMAG1:
-        raise ValidationException("bad elf magic")
+        if header.e_ident[constants.EI_MAG1] != constants.ELFMAG1:
+            raise ValidationException("bad elf magic")
 
-    if header.e_ident[constants.EI_MAG2] != constants.ELFMAG2:
-        raise ValidationException("bad elf magic")
+        if header.e_ident[constants.EI_MAG2] != constants.ELFMAG2:
+            raise ValidationException("bad elf magic")
 
-    if header.e_ident[constants.EI_MAG3] != constants.ELFMAG3:
-        raise ValidationException("bad elf magic")
+        if header.e_ident[constants.EI_MAG3] != constants.ELFMAG3:
+            raise ValidationException("bad elf magic")
 
-    if header.e_machine != 0x3e:
-        raise ValidationException("bad machine")
+        if header.e_machine != 0x3e:
+            raise ValidationException("bad machine")
 
-    if header.e_type != constants.ET_EXEC and header.e_type != constants.ET_DYN:
-        raise ValidationException("bad type")
+        if header.e_type != constants.ET_EXEC and header.e_type != constants.ET_DYN:
+            raise ValidationException("bad type")
 
-    segments = list(Segment.from_buffer(data, header.e_phoff + i * sizeof(Segment)) for i in range(header.e_phnum))
-    sections = list(Section.from_buffer(data, header.e_shoff + i * sizeof(Section)) for i in range(header.e_shnum))
+        segments = list(Segment.from_buffer(data, header.e_phoff + i * sizeof(Segment)) for i in range(header.e_phnum))
+        sections = list(Section.from_buffer(data, header.e_shoff + i * sizeof(Section)) for i in range(header.e_shnum))
 
-    for segment in segments:
-        if segment.p_type in blacklist_segments:
-            raise ValidationException("blacklisted segment not allowed")
+        for segment in segments:
+            if segment.p_type in blacklist_segments:
+                raise ValidationException("blacklisted segment not allowed")
 
-    return Elf(data, header, segments, sections)
-```
+        return Elf(data, header, segments, sections)
+    ```
 
-So base on this we know that the file must be `64-bit (ELFCLASS64)` and `little-endian (ELFDATA2LSB)`, with the header, section header, and program header sizes matching their defined structures, the first bytes of e_ident equal to the expected magic number (0x7F, 'E', 'L', 'F'), and e_machine set to 0x3e (x86-64) with e_type being either `ET_EXEC` or `ET_DYN`.
+    So base on this we know that the file must be `64-bit (ELFCLASS64)` and `little-endian (ELFDATA2LSB)`, with the header, section header, and program header sizes matching their defined structures, the first bytes of e_ident equal to the expected magic number (0x7F, 'E', 'L', 'F'), and e_machine set to 0x3e (x86-64) with e_type being either `ET_EXEC` or `ET_DYN`.
 
 - `content()` function:
 
-```py
-def content(self, part: Segment | Section) -> bytes:
-    if type(part) == Segment:
-        return self.ref[part.p_offset : part.p_offset + part.p_filesz]
-    elif type(part) == Section:
-        return self.ref[part.sh_offset : part.sh_offset + part.sh_size]
-    else:
-        raise NotImplementedError("unsupported argument type")
-```
+    ```py
+    def content(self, part: Segment | Section) -> bytes:
+        if type(part) == Segment:
+            return self.ref[part.p_offset : part.p_offset + part.p_filesz]
+        elif type(part) == Section:
+            return self.ref[part.sh_offset : part.sh_offset + part.sh_size]
+        else:
+            raise NotImplementedError("unsupported argument type")
+    ```
 
-This method takes out the content of a segment or section from the original data based on the offset and size. This is the way to access the data part of the ELF file.
+    This method takes out the content of a segment or section from the original data based on the offset and size. This is the way to access the data part of the ELF file.
 
 - `run()` function:
 
-```py
-def run(self, argv: list[str] | None = None):
-    argv = argv or sys.argv
-    fd = memfd_create("chal", 0)
-    write(fd, self.raw)
-    execve(fd, argv, environ)
-```
+    ```py
+    def run(self, argv: list[str] | None = None):
+        argv = argv or sys.argv
+        fd = memfd_create("chal", 0)
+        write(fd, self.raw)
+        execve(fd, argv, environ)
+    ```
 
-This method creates a virtual file in memory using `memfd_create`, writes all the ELF data into it, and then uses `execve` to run the ELF file. This is where the file given by the user is executed.
+    This method creates a virtual file in memory using `memfd_create`, writes all the ELF data into it, and then uses `execve` to run the ELF file. This is where the file given by the user is executed.
 
 Based on that, we know that when we take the content of our ELF file out, it will also execute our elf file.
 
