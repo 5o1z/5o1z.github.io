@@ -1429,7 +1429,7 @@ When an ELF file is executed, the loader system will:
 
 And we know that `EXECINSTR` flag is typically placed in the `sh_flags` field of the `section header` in an ELF file. Specifically, this flag (defined as 1 << 2 or value 4) marks sections that contain executable code, such as the `.text` section.
 
-But in the source code we see above, the program iterates through all sections and if it finds any section with the `EXECINSTR` flag set, it throws an exception, thereby preventing the ELF file from being executed. This is to prevent code that is marked as executable from running across sections, although the loader actually uses information from the program header to decide memory access. So we can completely remove the section header and put our shellcode in for the program to execute freely. And to rewrite an elf file for myself I consulted this [page]https://0xninja.fr/posts/binary-golf/)
+But in the source code we see above, the program iterates through all sections and if it finds any section with the `EXECINSTR` flag set, it throws an exception, thereby preventing the ELF file from being executed. This is to prevent code that is marked as executable from running across sections, although the loader actually uses information from the program header to decide memory access. So we can completely remove the section header and put our shellcode in for the program to execute freely. And to rewrite an elf file for myself I consulted this [page](https://0xninja.fr/posts/binary-golf/)
 
 ```py
 #!/usr/bin/env python3
