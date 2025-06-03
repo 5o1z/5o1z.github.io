@@ -9,8 +9,6 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/scripts/performance.js',
-  '/styles/global.css',
-  '/styles/typography.css',
   '/site.webmanifest',
 ]
 

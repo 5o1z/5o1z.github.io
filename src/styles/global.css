@@ -398,4 +398,40 @@ article h1 {
   .no-scroll {
     overflow: hidden !important;
   }
+
+  /* Theme dropdown animations */
+  .disable-transitions * {
+    transition: none !important;
+  }
+
+  #theme-dropdown {
+    backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background) / 0.95);
+  }
+
+  .theme-option {
+    text-align: left;
+  }
+
+  .theme-option:focus {
+    outline: none;
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+
+  .theme-option[data-theme='light']:hover {
+    background-color: hsl(48 96% 89%);
+    color: hsl(20 14% 4%);
+  }
+
+  .theme-option[data-theme='dark']:hover {
+    background-color: hsl(215 28% 17%);
+    color: hsl(213 31% 91%);
+  }
+
+  .theme-option[data-theme='system']:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
 }

