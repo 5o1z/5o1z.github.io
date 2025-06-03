@@ -1,0 +1,120 @@
+---
+import BlogCard from '@/components/BlogCard.astro'
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import Link from '@/components/Link.astro'
+import PageHead from '@/components/PageHead.astro'
+import { badgeVariants } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import Layout from '@/layouts/Layout.astro'
+import { getAllPosts, getSortedTags, groupPostsByYear, getYearStats } from '@/lib/data-utils'
+import { Icon } from 'astro-icon/components'
+
+const allPosts = await getAllPosts()
+const postsByYear = groupPostsByYear(allPosts)
+const years = Object.keys(postsByYear).sort((a, b) => parseInt(b) - parseInt(a))
+const sortedTags = await getSortedTags()
+---
+
+<Layout>
+  <PageHead slot="head" title="Archive" />
+  <Breadcrumbs items={[{ label: 'Archive', icon: 'lucide:archive' }]} />
+  <div class="flex flex-col gap-8">
+    <!-- Overview Stats -->
+    <section class="flex flex-col gap-4">
+      <div class="flex items-center gap-2">
+        <Icon name="lucide:bar-chart-3" class="size-6" />
+        <h2 class="text-2xl font-medium">Overview</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="rounded-lg border bg-background/50 p-4 text-center">
+          <div class="text-2xl font-bold text-primary">{allPosts.length}</div>
+          <div class="text-sm text-muted-foreground">Total Posts</div>
+        </div>
+        <div class="rounded-lg border bg-background/50 p-4 text-center">
+          <div class="text-2xl font-bold text-primary">{sortedTags.length}</div>
+          <div class="text-sm text-muted-foreground">Total Tags</div>
+        </div>
+        <div class="rounded-lg border bg-background/50 p-4 text-center">
+          <div class="text-2xl font-bold text-primary">{years.length}</div>
+          <div class="text-sm text-muted-foreground">Years Active</div>
+        </div>
+      </div>
+    </section>
+
+    <Separator />
+
+    <!-- Tags Section -->
+    <section class="flex flex-col gap-4">
+      <div class="flex items-center gap-2">
+        <Icon name="lucide:tags" class="size-6" />
+        <h2 class="text-2xl font-medium">Tags</h2>
+      </div>
+      <div class="rounded-lg border bg-background/50 p-6">
+        <div class="flex flex-wrap gap-2">
+          {
+            sortedTags.map(({ tag, count }) => (
+              <Link
+                href={`/archive/tag/${tag}`}
+                class={badgeVariants({ variant: 'secondary' })}
+              >
+                <Icon name="lucide:hash" class="size-3" />
+                {tag}
+                <span class="text-muted-foreground ml-1.5">({count})</span>
+              </Link>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <Separator />
+
+    <!-- Posts by Year Section -->
+    <section class="flex flex-col gap-6">
+      <div class="flex items-center gap-2">
+        <Icon name="lucide:calendar" class="size-6" />
+        <h2 class="text-2xl font-medium">Posts by Year</h2>
+      </div>      <div class="flex flex-col gap-8">
+        {
+          years.map((year) => (
+            <div class="flex flex-col gap-4">
+              <div class="flex items-center gap-3">
+                <Link href={`/archive/${year}`}>
+                  <h3 class="text-xl font-semibold hover:text-primary transition-colors cursor-pointer">
+                    {year}
+                  </h3>
+                </Link>
+                <span class="text-muted-foreground text-sm">
+                  ({postsByYear[year].length} posts)
+                </span>
+                <Link
+                  href={`/archive/${year}`}
+                  class="text-sm text-primary hover:underline ml-auto"
+                >
+                  View all →
+                </Link>
+              </div>
+              <div class="flex flex-col gap-4 pl-4 border-l-2 border-muted">
+                {postsByYear[year].slice(0, 3).map((post) => (
+                  <div class="w-full">
+                    <BlogCard entry={post} />
+                  </div>
+                ))}
+                {postsByYear[year].length > 3 && (
+                  <div class="text-center">
+                    <Link
+                      href={`/archive/${year}`}
+                      class="text-sm text-muted-foreground hover:text-primary"
+                    >
+                      ... and {postsByYear[year].length - 3} more posts
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</Layout>

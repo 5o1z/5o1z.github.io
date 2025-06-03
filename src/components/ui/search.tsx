@@ -12,7 +12,6 @@ export function Search() {
   const [filteredPosts, setFilteredPosts] = useState<SearchItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searchHistory, setSearchHistory] = useState<string[]>([])
-  const [showHistory, setShowHistory] = useState(false)
   // Load search history from localStorage on mount
   useEffect(() => {
     const savedHistory = localStorage.getItem('search-history')
@@ -40,11 +39,9 @@ export function Search() {
     setSearchHistory([])
     localStorage.removeItem('search-history')
   }
-
   // Reset search interface to initial state
   const resetSearchState = () => {
     setSearchQuery('')
-    setShowHistory(false)
   }
 
   useEffect(() => {
@@ -215,7 +212,7 @@ export function Search() {
                       saveToHistory(searchQuery)
                     }
                   }}
-                  onFocus={() => setShowHistory(true)}
+                  onFocus={() => {}}
                   placeholder="Search posts..."
                   className="placeholder:text-muted-foreground/70 flex-1 bg-transparent text-base outline-none"
                   autoFocus
@@ -261,7 +258,6 @@ export function Search() {
                           key={index}
                           onClick={() => {
                             setSearchQuery(query)
-                            setShowHistory(false)
                           }}
                           className="text-muted-foreground hover:text-foreground hover:bg-muted/50 group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-all duration-200"
                         >
@@ -362,7 +358,7 @@ export function Search() {
                   </div>
                 ) : filteredPosts.length > 0 ? (
                   <div className="space-y-1">
-                    {filteredPosts.map((post, index) => (
+                    {filteredPosts.map((post) => (
                       <a
                         key={post.slug}
                         href={`/blog/${post.slug}`}

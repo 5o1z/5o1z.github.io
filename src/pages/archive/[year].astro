@@ -1,0 +1,62 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import PageHead from '@/components/PageHead.astro'
+import { YearSearch } from '@/components/ui/year-search.tsx'
+import Layout from '@/layouts/Layout.astro'
+import { getAllPosts, groupPostsByYear } from '@/lib/data-utils'
+import { Icon } from 'astro-icon/components'
+
+export async function getStaticPaths() {
+  const allPosts = await getAllPosts()
+  const postsByYear = groupPostsByYear(allPosts)
+  const years = Object.keys(postsByYear)
+
+  return years.map((year) => ({
+    params: { year },
+    props: {
+      year,
+      posts: postsByYear[year],
+    },
+  }))
+}
+
+const { year, posts } = Astro.props
+
+// Transform posts for the search component
+const searchablePosts = posts.map((post) => ({
+  title: post.data.title,
+  description: post.data.description,
+  slug: post.id,
+  tags: post.data.tags,
+  image: post.data.image?.src,
+}))
+---
+
+<Layout>
+  <PageHead
+    slot="head"
+    title={`Archive ${year}`}
+    description={`All posts from ${year}.`}
+  />
+  <Breadcrumbs
+    items={[
+      { href: '/archive', label: 'Archive', icon: 'lucide:archive' },
+      { label: year, icon: 'lucide:calendar' },
+    ]}
+  />
+
+  <div class="flex flex-col gap-6">
+    <div class="flex items-center gap-3">
+      <Icon name="lucide:calendar" class="size-8" />
+      <h1 class="text-3xl font-medium">Posts from {year}</h1>
+      <span class="text-muted-foreground text-lg">
+        ({posts.length} posts)
+      </span>
+    </div>    <div class="text-muted-foreground text-sm">
+      Showing all {posts.length} posts published in {year}
+    </div>
+
+    <!-- Search Component -->
+    <YearSearch posts={searchablePosts} year={year} client:load />
+  </div>
+</Layout>

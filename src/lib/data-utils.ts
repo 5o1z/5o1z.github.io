@@ -140,3 +140,50 @@ export async function getAllPostsWithPinnedFirst(): Promise<CollectionEntry<'blo
       return b.data.date.valueOf() - a.data.date.valueOf()
     })
 }
+
+export async function getPostsByYear(
+  year: string,
+): Promise<CollectionEntry<'blog'>[]> {
+  const posts = await getAllPosts()
+  return posts.filter((post) => {
+    const postYear = post.data.date.getFullYear().toString()
+    return postYear === year
+  })
+}
+
+export async function getYearStats(): Promise<
+  { year: string; count: number }[]
+> {
+  const posts = await getAllPosts()
+  const yearStats = posts.reduce((acc, post) => {
+    const year = post.data.date.getFullYear().toString()
+    acc.set(year, (acc.get(year) || 0) + 1)
+    return acc
+  }, new Map<string, number>())
+
+  return [...yearStats.entries()]
+    .map(([year, count]) => ({ year, count }))
+    .sort((a, b) => parseInt(b.year) - parseInt(a.year))
+}
+
+export function groupPostsByMonth(
+  posts: CollectionEntry<'blog'>[],
+): Record<string, Record<string, CollectionEntry<'blog'>[]>> {
+  return posts.reduce(
+    (acc: Record<string, Record<string, CollectionEntry<'blog'>[]>>, post) => {
+      const year = post.data.date.getFullYear().toString()
+      const month = post.data.date.toLocaleString('default', { month: 'long' })
+
+      if (!acc[year]) {
+        acc[year] = {}
+      }
+      if (!acc[year][month]) {
+        acc[year][month] = []
+      }
+
+      acc[year][month].push(post)
+      return acc
+    },
+    {},
+  )
+}

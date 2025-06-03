@@ -7,8 +7,8 @@ export const SITE: Site = {
   href: 'https://5o1z.github.io',
   author: 'K.',
   locale: 'en-US',
-  featuredPostCount: 3,
-  postsPerPage: 4,
+  featuredPostCount: 5,
+  postsPerPage: 5,
 }
 
 export const NAV_LINKS: SocialLink[] = [
@@ -25,8 +25,8 @@ export const NAV_LINKS: SocialLink[] = [
     label: 'about',
   },
     {
-    href: '/tags',
-    label: 'tags',
+    href: '/archive',
+    label: 'archive',
   },
 ]
 

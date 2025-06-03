@@ -1,0 +1,68 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import PageHead from '@/components/PageHead.astro'
+import { TagSearch } from '@/components/ui/tag-search.tsx'
+import Layout from '@/layouts/Layout.astro'
+import { getAllTags, getPostsByTag } from '@/lib/data-utils'
+import { Icon } from 'astro-icon/components'
+
+export async function getStaticPaths() {
+  const tagMap = await getAllTags()
+  const uniqueTags = Array.from(tagMap.keys())
+
+  return Promise.all(
+    uniqueTags.map(async (tag) => {
+      const posts = await getPostsByTag(tag)
+      return {
+        params: { id: tag },
+        props: {
+          tag,
+          posts,
+        },
+      }
+    }),
+  )
+}
+
+const { tag, posts } = Astro.props
+
+// Transform posts for the search component
+const searchablePosts = posts.map((post) => ({
+  title: post.data.title,
+  description: post.data.description,
+  slug: post.id,
+  tags: post.data.tags,
+  year: post.data.date.getFullYear().toString(),
+  image: post.data.image?.src,
+}))
+---
+
+<Layout>
+  <PageHead
+    slot="head"
+    title={`Posts tagged with "${tag}"`}
+    description={`A collection of posts tagged with ${tag}.`}
+  />
+  <Breadcrumbs
+    items={[
+      { href: '/archive', label: 'Archive', icon: 'lucide:archive' },
+      { label: tag, icon: 'lucide:tag' },
+    ]}
+  />
+
+  <div class="flex flex-col gap-6">
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="text-3xl font-medium">Posts tagged with</h1>
+      <span
+        class="bg-secondary flex items-center gap-x-1 rounded-full px-4 py-2 text-2xl font-medium"
+      >
+        <Icon name="lucide:hash" class="size-6 -translate-x-0.5" />{tag}
+      </span>
+    </div>    <div class="text-muted-foreground text-sm">
+      Found {posts.length} posts with this tag
+    </div>
+
+    <!-- Search Component -->
+    <TagSearch posts={searchablePosts} tag={tag} client:load />
+  </div>
+</Layout>

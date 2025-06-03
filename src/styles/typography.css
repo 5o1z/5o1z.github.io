@@ -81,13 +81,11 @@
       @apply text-[16px];
       @apply [&>span[data-line='']>*]:text-(--shiki-light) dark:[&>span[data-line='']>*]:text-(--shiki-dark);
     }
-
     .expressive-code {
       @apply my-6 [&_.title]:font-medium!;
     }
-
     blockquote {
-      @apply [&_*]:text-muted-foreground my-6 border-l-2 pl-6;
+      @apply [&_*]:text-muted-foreground border-border dark:border-muted-foreground/15 my-6 border-l-2 pl-6;
     }
 
     hr {
