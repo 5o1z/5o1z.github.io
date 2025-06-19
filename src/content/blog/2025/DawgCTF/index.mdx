@@ -8,7 +8,7 @@ authors: ['kdot']
 draft: false
 ---
 
-# Reverse Engineering
+## Reverse Engineering
 
 Yes, as the description of this post, this challenge is a pure stack pivot challenge, but there will be a little bit of fun here.
 
@@ -168,9 +168,9 @@ Nice nice, 92 gadgets found, and there are no `pop rdi` gadget for us to control
 
 There are two gadgets that we can use to leak the address. So our plan now is using `Stack Pivot` to control the `rbp` and then write the address of `puts` to the `s` buffer, and then we can use the `puts` gadget to leak the address of `puts` and then calculate the base address of `libc`. After that, we can use the `system` function to drop a shell.
 
-# Exploit Development
+## Exploit Development
 
-Alright, the idea is clear, noew let's start to write the exploit. First of all, we need to find the offset to `rbp` and one `rw-` memory address. And then start to write a pivot payload
+Alright, the idea is clear, now let's start to write the exploit. First of all, we need to find the offset to `rbp` and one `rw-` memory address. And then start to write a pivot payload
 
 ```py
     offset = 0x20

